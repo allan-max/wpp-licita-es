@@ -8,9 +8,7 @@ const wppconnect = require('@wppconnect-team/wppconnect');
 let mainWindow;
 let clientInstance = null;
 
-// ==========================================
 // CONFIGURAÇÕES DO ELECTRON E AUTO-UPDATE
-// ==========================================
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 900,
@@ -38,9 +36,7 @@ ipcMain.on('aplicar-atualizacao', () => {
   autoUpdater.quitAndInstall();
 });
 
-// ==========================================
 // ADAPTAÇÃO DO SEU CÓDIGO NODE.JS
-// ==========================================
 app.whenReady().then(() => {
   createWindow();
 

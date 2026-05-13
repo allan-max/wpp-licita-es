@@ -24,9 +24,8 @@ function registrarLog(mensagem) {
   fs.appendFileSync(ARQUIVO_LOG, linhaLog + '\n', 'utf8');
 }
 
-// ==========================================
+
 // MEMÓRIA DE CHATS LIBERADOS E VOTAÇÕES
-// ==========================================
 let chatsLiberados = [];
 
 try {
@@ -62,9 +61,7 @@ function salvarResultadoDaLicitacao(numero, objeto, votoFinal) {
   fs.writeFileSync(ARQUIVO_RESULTADOS, JSON.stringify(resultados, null, 2));
 }
 
-// ==========================================
 // INICIANDO O WPPCONNECT
-// ==========================================
 registrarLog('Iniciando WPPConnect...');
 
 wppconnect
@@ -130,9 +127,7 @@ wppconnect
     registrarLog(`Erro ao iniciar: ${error.message}`);
   });
 
-// ==========================================
 // ROTA DA API (DISPARO E CRONÔMETRO ISOLADO POR MENSAGEM)
-// ==========================================
 app.post('/liberar-chat', async (req, res) => {
   const { objeto, valor_total, localidade } = req.body;
 

@@ -9,10 +9,9 @@
     "build": "electron-builder --win"
   },
   "build": {
-    "appId": "com.seunome.botlicitacoes",
+    "appId": "com.allan.botlicitacoes",
     "win": {
-      "target": "nsis",
-      "icon": "build/icon.ico" 
+      "target": "nsis"
     },
     "asarUnpack": [
       "node_modules/puppeteer-core/**"
@@ -20,8 +19,8 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "seu_usuario_do_github",
-        "repo": "nome_do_repositorio"
+        "owner": "allan-max",
+        "repo": "https://github.com/allan-max/wpp-licita-es/tree/main"
       }
     ]
   },
