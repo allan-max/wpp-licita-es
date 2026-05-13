@@ -1,8 +1,8 @@
 {
   "name": "bot-licitacoes",
   "version": "1.0.0",
-  "description": "Sistema de Automação de WhatsApp",
-  "author": "Allan Iglesias", 
+  "description": "Sistema de Automação de licitacoes por WhatsApp",
+  "author": "Allan Iglesias",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -10,6 +10,7 @@
   },
   "build": {
     "appId": "com.allan.botlicitacoes",
+    "npmRebuild": false,
     "win": {
       "target": "nsis"
     },
@@ -20,17 +21,17 @@
       {
         "provider": "github",
         "owner": "allan-max",
-        "repo": "https://github.com/allan-max/wpp-licita-es/tree/main"
+        "repo": "https://github.com/allan-max/wpp-licita-es"
       }
     ]
   },
   "dependencies": {
     "@wppconnect-team/wppconnect": "^1.30.0",
-    "express": "^4.19.2",
-    "electron-updater": "^6.1.8"
+    "electron-updater": "^6.1.8",
+    "express": "^4.22.2"
   },
   "devDependencies": {
-    "electron": "30.0.0", 
+    "electron": "30.0.0",
     "electron-builder": "^24.13.3"
   }
 }
