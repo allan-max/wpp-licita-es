@@ -21,6 +21,10 @@
   <button id="btn-atualizar">✨ Nova Atualização Baixada! Clique aqui para Instalar.</button>
 
   <h1>Painel de Controle</h1>
+  <div id="area-qr" style="display: none; background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1);">
+    <p style="margin-top: 0;">📱 Escaneie o QR Code com o WhatsApp:</p>
+    <img id="imagem-qr" src="" style="max-width: 250px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+  </div>
   <p>Status: <span style="color: #a6e3a1;">Rodando em Segundo Plano</span></p>
 
   <div class="terminal" id="terminal-logs">
@@ -49,6 +53,13 @@
     btnAtualizar.addEventListener('click', () => {
       btnAtualizar.innerText = "Instalando... O app vai reiniciar.";
       window.api.aplicarAtualizacao();
+    });
+    window.api.receberQRCode((event, base64) => {
+      const areaQr = document.getElementById('area-qr');
+      const imgQr = document.getElementById('imagem-qr');
+      
+      areaQr.style.display = 'block'; // Revela a caixa de vidro na tela
+      imgQr.src = base64; // Injeta a imagem recebida do wppconnect
     });
   </script>
 </body>
