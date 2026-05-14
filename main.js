@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, Tray, Menu } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs = require('fs');
@@ -7,6 +7,7 @@ const wppconnect = require('@wppconnect-team/wppconnect');
 
 let mainWindow;
 let clientInstance = null;
+let tray = null;
 
 // CONFIGURAÇÕES DO ELECTRON E AUTO-UPDATE
 function createWindow() {
@@ -14,14 +15,27 @@ function createWindow() {
     width: 900,
     height: 700,
     autoHideMenuBar: true, // Esconde o menu superior estilo Windows antigo
+    icon: path.join(__dirname, 'assets/maestro-licita.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true
+      
     }
+    
   });
 
-  mainWindow.loadFile('index.html');
+ mainWindow.loadFile('index.html');
+ // mainWindow.webContents.openDevTools(); para abrir o DevTools na tela
+
+  // BLOQUEADOR DO BOTÃO X
+  mainWindow.on('close', function (event) {
+    if (!app.isQuiting) {
+      event.preventDefault(); // Impede de fechar
+      mainWindow.hide();      // Apenas esconde a janela
+    }
+    return false;
+  });
 
   // Checa se tem atualização no GitHub silenciosamente
   autoUpdater.checkForUpdatesAndNotify();
@@ -39,6 +53,34 @@ ipcMain.on('aplicar-atualizacao', () => {
 // ADAPTAÇÃO DO SEU CÓDIGO NODE.JS
 app.whenReady().then(() => {
   createWindow();
+
+  const iconPath = path.join(__dirname, 'assets/maestro-licita.ico');
+  tray = new Tray(iconPath);
+
+  const contextMenu = Menu.buildFromTemplate([
+    { 
+      label: 'Abrir Painel do Bot', 
+      click: function () {
+        mainWindow.show(); 
+      } 
+    },
+    { type: 'separator' }, 
+    { 
+      label: 'Encerrar Robô Completamente', 
+      click: function () {
+        app.isQuiting = true; 
+        app.quit();
+      } 
+    }
+  ]);
+
+  tray.setToolTip('Bot de Licitações - Rodando');
+  tray.setContextMenu(contextMenu);
+
+  // Se o cliente der dois cliques com o botão esquerdo no ícone, a tela abre
+  tray.on('double-click', () => {
+    mainWindow.show();
+  });
 
   // GARANTE QUE OS ARQUIVOS VÃO PARA A PASTA CORRETA (AppData)
   const userDataPath = app.getPath('userData');
@@ -92,8 +134,12 @@ app.whenReady().then(() => {
   // Iniciando WPPConnect
   wppconnect.create({
     session: 'sessao-api-bot',
-    headless: true, // Muito importante continuar true
-    // Opcional: folderNameToken: path.join(userDataPath, 'tokens') // Para salvar a sessão no AppData
+    headless: true,
+    catchQR: (base64Qr, asciiQR) => {
+      registrarLog('QR Code gerado! Aguardando o cliente escanear...');
+      // Envia a imagem Base64 do Node.js para o Front-end (HTML)
+      if (mainWindow) mainWindow.webContents.send('exibir-qr', base64Qr);
+    }
   }).then((client) => {
     clientInstance = client;
     registrarLog('WhatsApp Conectado com sucesso!');

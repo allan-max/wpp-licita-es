@@ -12,7 +12,8 @@
     "appId": "com.allan.botlicitacoes",
     "npmRebuild": false,
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "build/maestro-licita.ico"
     },
     "asarUnpack": [
       "node_modules/puppeteer-core/**"
