@@ -2,64 +2,218 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Painel do Bot de Licitações</title>
+  <title>Painel do Maestro Licitações</title>
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1e1e2e; color: #cdd6f4; margin: 0; padding: 20px; }
-    h1 { color: #89b4fa; }
-    .terminal { background-color: #11111b; padding: 15px; border-radius: 8px; height: 400px; overflow-y: auto; font-family: monospace; border: 1px solid #313244; }
-    .log-line { margin: 5px 0; border-bottom: 1px solid #313244; padding-bottom: 3px;}
-    
-    #btn-atualizar {
-      display: none; 
-      background-color: #a6e3a1; color: #11111b; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 15px; width: 100%;
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #1e1e2e;
+      color: #cdd6f4;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      min-height: 100vh;
     }
-    #btn-atualizar:hover { background-color: #94e289; }
+    h1 {
+      color: #89b4fa;
+      margin-bottom: 20px;
+    }
+    /* Tela de bloqueio */
+    #tela-bloqueio {
+      margin-top: 20vh;
+    }
+    #tela-bloqueio h2 {
+      color: #f9e2af;
+    }
+    #input-chave {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      width: 200px;
+    }
+    #btn-ativar {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    #msg-erro {
+      color: #ff4d4d;
+      display: none;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    /* Tela principal */
+    #tela-principal {
+      display: none;
+    }
+    .instrucoes-box {
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(12px);
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 500px;
+      margin: 0 auto 25px auto;
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #bac2de;
+      font-size: 15px;
+      line-height: 1.5;
+      text-align: left;
+    }
+    .instrucoes-box strong {
+      color: #f9e2af;
+    }
+    #area-qr {
+      display: none;
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 400px;
+      margin: 0 auto 20px auto;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    #area-qr p {
+      margin-top: 0;
+      font-size: 16px;
+      color: #f5c2e7;
+    }
+    #imagem-qr {
+      max-width: 250px;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    #btn-atualizar {
+      display: none;
+      background-color: #a6e3a1;
+      color: #11111b;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-bottom: 15px;
+      width: 100%;
+      max-width: 400px;
+    }
+    #btn-atualizar:hover {
+      background-color: #94e289;
+    }
+
+    /* Caixa de suporte e créditos – agora bem transparente */
+    .info-canto {
+      position: fixed;
+      bottom: 15px;
+      right: 15px;
+      background: rgba(255, 255, 255, 0.08); /* fundo quase imperceptível */
+      backdrop-filter: blur(6px);             /* vidro leve */
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #cdd6f4;
+      text-align: right;
+      z-index: 999;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      line-height: 1.6;
+    }
+    .info-canto span.destaque {
+      color: #f9e2af;
+      font-weight: 600;
+    }
+    .info-canto .creditos {
+      margin-top: 6px;
+      font-size: 12px;
+      opacity: 0.85;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding-top: 6px;
+    }
   </style>
 </head>
 <body>
 
-  <button id="btn-atualizar">✨ Nova Atualização Baixada! Clique aqui para Instalar.</button>
-
-  <h1>Painel de Controle</h1>
-  <div id="area-qr" style="display: none; background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1);">
-    <p style="margin-top: 0;">📱 Escaneie o QR Code com o WhatsApp:</p>
-    <img id="imagem-qr" src="" style="max-width: 250px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+  <!-- Bloqueio por chave -->
+  <div id="tela-bloqueio" style="display: none;">
+    <h2>🔒 Ativação do Sistema</h2>
+    <p>Insira sua chave de acesso enviada pelo administrador:</p>
+    <input type="text" id="input-chave" placeholder="Ex: A1B2C3D4">
+    <button id="btn-ativar">Ativar</button>
+    <p id="msg-erro">Chave inválida! Tente novamente.</p>
   </div>
-  <p>Status: <span style="color: #a6e3a1;">Rodando em Segundo Plano</span></p>
 
-  <div class="terminal" id="terminal-logs">
-    <div class="log-line">Aguardando inicialização do sistema...</div>
+  <!-- Tela principal -->
+  <div id="tela-principal">
+    <h1> Maestro Licitações</h1>
+
+    <div class="instrucoes-box">
+      <p>📌 <strong>Importante:</strong> para que o bot mande as licitações para o seu número, você precisa enviar a mensagem <strong>"liberar chat"</strong> no chat do bot.</p>
+      <p>Ele avisará que seu chat foi liberado e passará a te enviar automaticamente todas as licitações que encontrar.</p>
+    </div>
+
+    <div id="area-qr">
+      <p>📱 Escaneie o QR code que será designado para o bot, será o número que irá te mandar mensagem.</p>
+      <img id="imagem-qr" src="" alt="QR Code">
+    </div>
+
+    <button id="btn-atualizar">✨ Nova Atualização! Clique aqui para Instalar.</button>
+  </div>
+
+  <!-- Cantinho informativo transparente -->
+  <div class="info-canto">
+    <div>
+      📧 <span class="destaque">Suporte:</span> maestro.portais@tutamail.com
+    </div>
+    <div>
+      📞 <span class="destaque">Telefone:</span> (99) 99999-9999
+    </div>
+    <div class="creditos">
+      Desenvolvido por <span class="destaque">Allan Simão</span> & <span class="destaque">Lucas Borges</span>
+    </div>
   </div>
 
   <script>
-    const terminal = document.getElementById('terminal-logs');
-    const btnAtualizar = document.getElementById('btn-atualizar');
-
-    // Escuta os logs chegando do Node.js
-    window.api.receberLog((event, texto) => {
-      const novaLinha = document.createElement('div');
-      novaLinha.className = 'log-line';
-      novaLinha.innerText = texto;
-      terminal.appendChild(novaLinha);
-      terminal.scrollTop = terminal.scrollHeight; // Rola para baixo automático
+    // ========== ATIVAÇÃO ==========
+    window.api.receberPedidoChave(() => {
+      document.getElementById('tela-bloqueio').style.display = 'block';
     });
 
-    // Escuta aviso de atualização pronta
-    window.api.receberAvisoAtualizacao(() => {
-      btnAtualizar.style.display = 'block'; // Mostra o botão verde gigante
+    document.getElementById('btn-ativar').addEventListener('click', () => {
+      const chaveDigitada = document.getElementById('input-chave').value.trim();
+      document.getElementById('msg-erro').style.display = 'none';
+      window.api.enviarChave(chaveDigitada);
     });
 
-    // Envia comando para fechar e atualizar
-    btnAtualizar.addEventListener('click', () => {
-      btnAtualizar.innerText = "Instalando... O app vai reiniciar.";
-      window.api.aplicarAtualizacao();
+    window.api.receberChaveInvalida(() => {
+      document.getElementById('msg-erro').style.display = 'block';
     });
+
+    window.api.liberarAcesso(() => {
+      document.getElementById('tela-bloqueio').style.display = 'none';
+      document.getElementById('tela-principal').style.display = 'block';
+    });
+
+    // ========== QR CODE ==========
     window.api.receberQRCode((event, base64) => {
       const areaQr = document.getElementById('area-qr');
       const imgQr = document.getElementById('imagem-qr');
-      
-      areaQr.style.display = 'block'; // Revela a caixa de vidro na tela
-      imgQr.src = base64; // Injeta a imagem recebida do wppconnect
+      areaQr.style.display = 'block';
+      imgQr.src = base64;
+    });
+
+    // ========== ATUALIZAÇÃO ==========
+    const btnAtualizar = document.getElementById('btn-atualizar');
+    window.api.receberAvisoAtualizacao(() => {
+      btnAtualizar.style.display = 'block';
+    });
+
+    btnAtualizar.addEventListener('click', () => {
+      btnAtualizar.innerText = "Instalando... O app vai reiniciar.";
+      window.api.aplicarAtualizacao();
     });
   </script>
 </body>
