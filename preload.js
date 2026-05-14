@@ -1,18 +1,14 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-// Expõe uma API segura para o mundo do Front-end (HTML)
 contextBridge.exposeInMainWorld('api', {
-  
-  // Escuta os textos de log vindos do Node.js
   receberLog: (callback) => ipcRenderer.on('novo-log', callback),
-  
-  // Escuta o aviso invisível de que o Auto-Update terminou de baixar
   receberAvisoAtualizacao: (callback) => ipcRenderer.on('atualizacao-pronta', callback),
-  
-  // Envia a ordem do botão HTML para o Node.js fechar o app e atualizar
   aplicarAtualizacao: () => ipcRenderer.send('aplicar-atualizacao'),
+  receberQRCode: (callback) => ipcRenderer.on('exibir-qr', callback),
   
-  // Escuta a imagem Base64 do QR Code gerado pelo WPPConnect
-  receberQRCode: (callback) => ipcRenderer.on('exibir-qr', callback)
-  
+  // NOVOS CANAIS DO SISTEMA DE LICENÇA (DRM)
+  receberPedidoChave: (callback) => ipcRenderer.on('pedir-chave', callback),
+  enviarChave: (chaveDigitada) => ipcRenderer.send('validar-chave', chaveDigitada),
+  receberChaveInvalida: (callback) => ipcRenderer.on('chave-invalida', callback),
+  liberarAcesso: (callback) => ipcRenderer.on('liberar-tela-principal', callback)
 });

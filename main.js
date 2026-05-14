@@ -4,44 +4,58 @@ const path = require('path');
 const fs = require('fs');
 const express = require('express');
 const wppconnect = require('@wppconnect-team/wppconnect');
+const crypto = require('crypto');
+const { machineIdSync } = require('node-machine-id');
+const https = require('https'); // <-- Adicionado aqui no topo!
 
 let mainWindow;
 let clientInstance = null;
 let tray = null;
 
-// CONFIGURAÇÕES DO ELECTRON E AUTO-UPDATE
+// ==========================================
+// 1. CONFIGURAÇÕES DA MÁQUINA E LICENÇA
+// ==========================================
+let hwidAtual;
+try {
+  hwidAtual = machineIdSync(true); 
+} catch (e) {
+  hwidAtual = 'DESCONHECIDO';
+}
+
+// ⚠️ COLOQUE O LINK DO SEU DISCORD AQUI ⚠️
+const WEBHOOK_DISCORD = 'https://discord.com/api/webhooks/1504491496668401924/TE9n3p4KYWlX2mPDAfXuzaw4Kvd2PZZ0yxytfzHYerbvrXKOqWbOTjcHvGdzxx8zb4B4';
+
+// ==========================================
+// 2. CONFIGURAÇÃO DA JANELA E AUTO-UPDATE
+// ==========================================
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 900,
     height: 700,
-    autoHideMenuBar: true, // Esconde o menu superior estilo Windows antigo
+    autoHideMenuBar: true,
     icon: path.join(__dirname, 'assets/maestro-licita.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true
-      
     }
-    
   });
 
- mainWindow.loadFile('index.html');
- // mainWindow.webContents.openDevTools(); para abrir o DevTools na tela
+  mainWindow.loadFile('index.html');
+  // mainWindow.webContents.openDevTools();
 
   // BLOQUEADOR DO BOTÃO X
   mainWindow.on('close', function (event) {
     if (!app.isQuiting) {
-      event.preventDefault(); // Impede de fechar
-      mainWindow.hide();      // Apenas esconde a janela
+      event.preventDefault();
+      mainWindow.hide();
     }
     return false;
   });
 
-  // Checa se tem atualização no GitHub silenciosamente
   autoUpdater.checkForUpdatesAndNotify();
 }
 
-// Escuta eventos do Auto-Updater
 autoUpdater.on('update-downloaded', () => {
   if (mainWindow) mainWindow.webContents.send('atualizacao-pronta');
 });
@@ -50,101 +64,142 @@ ipcMain.on('aplicar-atualizacao', () => {
   autoUpdater.quitAndInstall();
 });
 
-// ADAPTAÇÃO DO SEU CÓDIGO NODE.JS
+// ==========================================
+// 3. INICIALIZAÇÃO DO SISTEMA
+// ==========================================
 app.whenReady().then(() => {
   createWindow();
 
+  // --- CONFIGURANDO A BANDEJA (TRAY) ---
   const iconPath = path.join(__dirname, 'assets/maestro-licita.ico');
   tray = new Tray(iconPath);
-
+  
   const contextMenu = Menu.buildFromTemplate([
     { 
       label: 'Abrir Painel do Bot', 
-      click: function () {
-        mainWindow.show(); 
-      } 
+      click: function () { mainWindow.show(); } 
     },
-    { type: 'separator' }, 
+    { type: 'separator' },
     { 
       label: 'Encerrar Robô Completamente', 
       click: function () {
         app.isQuiting = true; 
-        app.quit();
+        app.quit(); 
       } 
     }
   ]);
-
-  tray.setToolTip('Bot de Licitações - Rodando');
+  
+  tray.setToolTip('Maestro Licitações - Rodando');
   tray.setContextMenu(contextMenu);
+  tray.on('double-click', () => { mainWindow.show(); });
 
-  // Se o cliente der dois cliques com o botão esquerdo no ícone, a tela abre
-  tray.on('double-click', () => {
-    mainWindow.show();
+  // --- CHAMA O GUARDA DE TRÂNSITO (DRM) ---
+  gerenciarLicenca();
+});
+
+// ==========================================
+// 4. SISTEMA DE LICENÇA (O GUARDA DE TRÂNSITO)
+// ==========================================
+function gerenciarLicenca() {
+  const userDataPath = app.getPath('userData');
+  const ARQUIVO_LICENCA = path.join(userDataPath, 'licenca.json');
+
+  // 1. Verifica se já existe licença ativa
+  if (fs.existsSync(ARQUIVO_LICENCA)) {
+    const licencaSalva = JSON.parse(fs.readFileSync(ARQUIVO_LICENCA, 'utf8'));
+    if (licencaSalva.hwid === hwidAtual && licencaSalva.status === 'ativo') {
+      console.log('Licença confirmada!');
+      mainWindow.webContents.send('liberar-tela-principal');
+      iniciarBotDeVerdade();
+      return; 
+    }
+  }
+
+  // 2. Se não tem licença, gera a chave
+  const novaChave = crypto.randomBytes(4).toString('hex').toUpperCase(); 
+
+  // Prepara a mensagem pro Discord
+  const dados = JSON.stringify({ 
+    content: `🚨 **Novo Acesso Detectado!**\n💻 HWID: \`${hwidAtual}\`\n🔑 Chave para o cliente: \`${novaChave}\`` 
   });
 
-  // GARANTE QUE OS ARQUIVOS VÃO PARA A PASTA CORRETA (AppData)
-  const userDataPath = app.getPath('userData');
-  const ARQUIVO_CONTATOS = path.join(userDataPath, 'contatos.json');
-  const ARQUIVO_LOG = path.join(userDataPath, 'log-zap.txt');
-  const ARQUIVO_RESULTADOS = path.join(userDataPath, 'resultados.json');
+  // Dispara a mensagem com o HTTPS raiz (À prova de falhas)
+  const req = https.request(WEBHOOK_DISCORD, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(dados)
+    }
+  }, (res) => {
+    console.log(`Status do envio pro Discord: ${res.statusCode}`);
+  });
 
-  // Função adaptada para mandar o log para a interface também
+  req.on('error', (erro) => {
+    console.log('O Firewall/Rede bloqueou o envio! Erro exato:', erro.message);
+  });
+
+  req.write(dados);
+  req.end();
+
+  // Trava a tela pedindo a chave
+  mainWindow.webContents.send('pedir-chave', novaChave);
+
+  // Escuta a tentativa do cliente
+  ipcMain.once('validar-chave', (event, chaveDigitada) => {
+    if (chaveDigitada === novaChave) {
+      // Salva a chave para nunca mais pedir
+      fs.writeFileSync(ARQUIVO_LICENCA, JSON.stringify({
+        token: novaChave, hwid: hwidAtual, status: 'ativo'
+      }, null, 2));
+
+      mainWindow.webContents.send('liberar-tela-principal');
+      iniciarBotDeVerdade();
+    } else {
+      mainWindow.webContents.send('chave-invalida');
+    }
+  });
+}
+
+// ==========================================
+// 5. O SEU BOT DE LICITAÇÕES (EXPRESS + WPPCONNECT)
+// ==========================================
+function iniciarBotDeVerdade() {
+  const userDataPath = app.getPath('userData');
+  const ARQUIVO_LOG = path.join(userDataPath, 'log-zap.txt');
+
   function registrarLog(mensagem) {
-    const dataHora = new Date().toLocaleString('pt-BR');
-    const linhaLog = `[${dataHora}] ${mensagem}`;
+    const linhaLog = `[${new Date().toLocaleString('pt-BR')}] ${mensagem}`;
     console.log(linhaLog);
     fs.appendFileSync(ARQUIVO_LOG, linhaLog + '\n', 'utf8');
-    
-    // Manda o texto para a tela do HTML!
     if (mainWindow) mainWindow.webContents.send('novo-log', linhaLog);
   }
 
-  // --- O RESTO DO SEU CÓDIGO CONTINUA IGUAL AQUI ---
-  let chatsLiberados = [];
-  try {
-    if (fs.existsSync(ARQUIVO_CONTATOS)) {
-      chatsLiberados = JSON.parse(fs.readFileSync(ARQUIVO_CONTATOS, 'utf8'));
-      registrarLog(`Memória carregada: ${chatsLiberados.length} contato(s).`);
-    } else {
-      fs.writeFileSync(ARQUIVO_CONTATOS, JSON.stringify([]));
-    }
-  } catch (erro) {
-    registrarLog(`Erro na memória: ${erro.message}`);
-  }
+  registrarLog('Iniciando o cérebro do Bot...');
 
-  function salvarContatos() { fs.writeFileSync(ARQUIVO_CONTATOS, JSON.stringify(chatsLiberados, null, 2)); }
-  
-  let votacoesAtivas = {};
-  if (!fs.existsSync(ARQUIVO_RESULTADOS)) fs.writeFileSync(ARQUIVO_RESULTADOS, JSON.stringify([]));
-
-  // Iniciando Express
+  // --- API EXPRESS ---
   const server = express();
   server.use(express.json());
 
   server.post('/liberar-chat', async (req, res) => {
-    // ... (Cole sua rota de disparo aqui exatamente como era)
-    registrarLog(`Recebido POST: ${req.body.objeto}`);
-    res.status(200).json({ sucesso: true, mensagem: `Disparo simulado.` });
+    res.status(200).json({ sucesso: true });
   });
 
   server.listen(3000, () => {
     registrarLog(`API Local rodando na porta 3000`);
   });
 
-  // Iniciando WPPConnect
+  // --- WPPCONNECT ---
   wppconnect.create({
     session: 'sessao-api-bot',
     headless: true,
     catchQR: (base64Qr, asciiQR) => {
       registrarLog('QR Code gerado! Aguardando o cliente escanear...');
-      // Envia a imagem Base64 do Node.js para o Front-end (HTML)
       if (mainWindow) mainWindow.webContents.send('exibir-qr', base64Qr);
     }
   }).then((client) => {
     clientInstance = client;
     registrarLog('WhatsApp Conectado com sucesso!');
-    // ... (Cole seus escutadores onMessage e onPollResponse aqui)
   }).catch((error) => {
     registrarLog(`Erro WPPConnect: ${error.message}`);
   });
-});
+}

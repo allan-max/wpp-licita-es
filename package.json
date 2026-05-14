@@ -1,5 +1,5 @@
 {
-  "name": "bot-licitacoes",
+  "name": "maestro-licita",
   "version": "1.0.0",
   "description": "Sistema de Automação de licitacoes por WhatsApp",
   "author": "Allan Iglesias",
@@ -9,7 +9,7 @@
     "build": "electron-builder --win"
   },
   "build": {
-    "appId": "com.allan.botlicitacoes",
+    "appId": "com.allan.maestrolicita",
     "npmRebuild": false,
     "win": {
       "target": "nsis",
@@ -29,7 +29,8 @@
   "dependencies": {
     "@wppconnect-team/wppconnect": "^1.30.0",
     "electron-updater": "^6.1.8",
-    "express": "^4.22.2"
+    "express": "^4.22.2",
+    "node-machine-id": "^1.1.12"
   },
   "devDependencies": {
     "electron": "30.0.0",
