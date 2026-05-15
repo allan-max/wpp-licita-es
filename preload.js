@@ -10,5 +10,8 @@ contextBridge.exposeInMainWorld('api', {
   receberPedidoChave: (callback) => ipcRenderer.on('pedir-chave', callback),
   enviarChave: (chaveDigitada) => ipcRenderer.send('validar-chave', chaveDigitada),
   receberChaveInvalida: (callback) => ipcRenderer.on('chave-invalida', callback),
-  liberarAcesso: (callback) => ipcRenderer.on('liberar-tela-principal', callback)
+  liberarAcesso: (callback) => ipcRenderer.on('liberar-tela-principal', callback),
+
+  // COMANDO PARA REINICIAR TUDO
+  reiniciarApp: () => ipcRenderer.send('reiniciar-app')
 });

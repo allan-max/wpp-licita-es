@@ -2,219 +2,310 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Painel do Maestro Licitações</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maestro Licitações</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #1e1e2e;
-      color: #cdd6f4;
+    * {
       margin: 0;
-      padding: 20px;
-      text-align: center;
-      position: relative;
-      min-height: 100vh;
-    }
-    h1 {
-      color: #89b4fa;
-      margin-bottom: 20px;
-    }
-    /* Tela de bloqueio */
-    #tela-bloqueio {
-      margin-top: 20vh;
-    }
-    #tela-bloqueio h2 {
-      color: #f9e2af;
-    }
-    #input-chave {
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      width: 200px;
-    }
-    #btn-ativar {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      background: #28a745;
-      color: white;
-      border: none;
-      border-radius: 5px;
-    }
-    #msg-erro {
-      color: #ff4d4d;
-      display: none;
-      font-weight: bold;
-      margin-top: 10px;
-    }
-    /* Tela principal */
-    #tela-principal {
-      display: none;
-    }
-    .instrucoes-box {
-      background: rgba(255,255,255,0.06);
-      backdrop-filter: blur(12px);
-      padding: 20px;
-      border-radius: 12px;
-      max-width: 500px;
-      margin: 0 auto 25px auto;
-      border: 1px solid rgba(255,255,255,0.15);
-      color: #bac2de;
-      font-size: 15px;
-      line-height: 1.5;
-      text-align: left;
-    }
-    .instrucoes-box strong {
-      color: #f9e2af;
-    }
-    #area-qr {
-      display: none;
-      background: rgba(255,255,255,0.05);
-      backdrop-filter: blur(10px);
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 400px;
-      margin: 0 auto 20px auto;
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-    #area-qr p {
-      margin-top: 0;
-      font-size: 16px;
-      color: #f5c2e7;
-    }
-    #imagem-qr {
-      max-width: 250px;
-      border-radius: 8px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    }
-    #btn-atualizar {
-      display: none;
-      background-color: #a6e3a1;
-      color: #11111b;
-      border: none;
-      padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-      margin-bottom: 15px;
-      width: 100%;
-      max-width: 400px;
-    }
-    #btn-atualizar:hover {
-      background-color: #94e289;
+      padding: 0;
+      box-sizing: border-box;
     }
 
-    /* Caixa de suporte e créditos – agora bem transparente */
-    .info-canto {
-      position: fixed;
-      bottom: 15px;
-      right: 15px;
-      background: rgba(255, 255, 255, 0.08); /* fundo quase imperceptível */
-      backdrop-filter: blur(6px);             /* vidro leve */
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 10px;
-      padding: 12px 16px;
-      font-size: 13px;
-      color: #cdd6f4;
-      text-align: right;
-      z-index: 999;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-      line-height: 1.6;
+    :root {
+      --bg-soft: #0d2238; /* Fundo principal do app */
+      --primary: #1ea35f;
+      --primary-hover: #24bd6f;
+      --text: #f4f7fb;
+      --text-soft: #9fb0c1;
+      --border: rgba(255,255,255,0.08);
     }
-    .info-canto span.destaque {
-      color: #f9e2af;
+
+    /* REMOVIDO O ESPAÇAMENTO E AS BORDAS PARA PREENCHER A TELA TODA */
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-soft);
+      color: var(--text);
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden; 
+      display: flex;
+    }
+
+    .container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* =========================================
+       TELA DE BLOQUEIO (DRM / LICENÇA)
+    ========================================= */
+    #tela-bloqueio {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--bg-soft);
+      display: none; 
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+      padding: 4vw;
+      text-align: center;
+    }
+
+    #tela-bloqueio h2 { font-size: clamp(24px, 4vh, 32px); margin-bottom: 2vh; }
+    #tela-bloqueio p { color: var(--text-soft); font-size: clamp(14px, 2vh, 16px); margin-bottom: 4vh; }
+    
+    .input-box { display: flex; gap: 1vw; justify-content: center; align-items: center; }
+
+    #input-chave {
+      background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white;
+      padding: 2vh 2vw; border-radius: 1vh; font-size: 16px; outline: none; width: 300px;
+      text-transform: uppercase; letter-spacing: 2px; text-align: center;
+    }
+
+    #btn-ativar {
+      background: var(--primary); color: white; border: none; padding: 2vh 3vw;
+      border-radius: 1vh; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s;
+    }
+    #btn-ativar:hover { background: var(--primary-hover); }
+
+    #msg-erro { color: #ff4d4d; margin-top: 2vh; display: none; font-weight: 600; }
+
+    /* =========================================
+       TELA PRINCIPAL
+    ========================================= */
+    #tela-principal { display: flex; flex-direction: column; width: 100%; height: 100%; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 3vh 4vw;
+      border-bottom: 1px solid var(--border);
+      height: 12vh;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px; 
+      font-size: clamp(18px, 3vh, 24px);
+      font-weight: 700;
+      color: white;
+    }
+
+    .logo-img {
+      height: 32px; /* Tamanho fixo e elegante para a logo ao lado do texto */
+      width: 32px;
+      object-fit: contain;
+    }
+
+    .status { display: flex; align-items: center; gap: 10px; color: #8de9b5; font-size: 14px; font-weight: 600; }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #1ea35f; box-shadow: 0 0 10px #1ea35f; }
+
+    .content {
+      flex: 1;
+      display: flex;
+      padding: 2vh 5vw;
+      gap: 4vw;
+      align-items: center;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    .left { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+    .left h1 { font-size: clamp(26px, 4.5vh, 40px); line-height: 1.1; margin-bottom: 2vh; letter-spacing: -1px; }
+    .left p { color: var(--text-soft); line-height: 1.6; font-size: clamp(13px, 1.8vh, 15px); margin-bottom: 4vh; }
+
+    .steps { display: flex; flex-direction: column; gap: 2vh; margin-bottom: 4vh; }
+    .step { display: flex; align-items: flex-start; gap: 1vw; }
+    .step-number {
+      width: clamp(26px, 3.5vh, 32px); height: clamp(26px, 3.5vh, 32px);
+      border-radius: 8px; background: rgba(30,163,95,0.12); color: #6ef0a4;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; flex-shrink: 0;
+    }
+    .step-text h3 { font-size: clamp(14px, 1.9vh, 15px); margin-bottom: 2px; }
+    .step-text span { color: var(--text-soft); font-size: clamp(11px, 1.7vh, 13px); line-height: 1.4; display: block; }
+
+    .actions { display: flex; gap: 1vw; }
+    .btn-primary {
+      background: var(--primary); color: white; border: none; padding: 1.5vh 1.8vw;
+      border-radius: 12px; font-size: clamp(12px, 1.7vh, 14px); font-weight: 600; cursor: pointer; transition: 0.2s;
+    }
+    .btn-primary:hover { background: var(--primary-hover); }
+
+    .btn-secondary {
+      background: transparent; border: 1px solid var(--border); color: var(--text);
+      padding: 1.5vh 1.8vw; border-radius: 12px; font-size: clamp(12px, 1.7vh, 14px); cursor: pointer; transition: 0.2s;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.08); }
+
+    .right { display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
+    .qr-wrapper { background: white; padding: 2vh; border-radius: 20px; margin-bottom: 2vh; }
+    #imagem-qr {
+      width: clamp(150px, 28vh, 250px);
+      height: clamp(150px, 28vh, 250px);
+      object-fit: contain;
+      display: block; border-radius: 10px;
+    }
+    .connection-info { 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      text-align: center; 
+      margin-top: 1vh;
+    }
+    .connection-info h3 { 
+      font-size: clamp(16px, 2.2vh, 18px); 
+      margin-bottom: 0.5vh; 
       font-weight: 600;
     }
-    .info-canto .creditos {
-      margin-top: 6px;
-      font-size: 12px;
-      opacity: 0.85;
-      border-top: 1px solid rgba(255,255,255,0.1);
-      padding-top: 6px;
+    .connection-info p { 
+      color: var(--text-soft); 
+      font-size: clamp(12px, 1.6vh, 14px); 
+      max-width: 280px; /* Mantém o texto da mesma largura do QR Code */
+      line-height: 1.4;
     }
+
+    .footer { border-top: 1px solid var(--border); padding: 2vh 4vw; height: 8vh; display: flex; justify-content: space-between; align-items: center; color: var(--text-soft); font-size: clamp(10px, 1.5vh, 12px); }
+    .footer strong { color: var(--text); font-weight: 600; }
   </style>
 </head>
 <body>
 
-  <!-- Bloqueio por chave -->
-  <div id="tela-bloqueio" style="display: none;">
-    <h2>🔒 Ativação do Sistema</h2>
-    <p>Insira sua chave de acesso enviada pelo administrador:</p>
-    <input type="text" id="input-chave" placeholder="Ex: A1B2C3D4">
-    <button id="btn-ativar">Ativar</button>
-    <p id="msg-erro">Chave inválida! Tente novamente.</p>
-  </div>
+  <div class="container">
 
-  <!-- Tela principal -->
-  <div id="tela-principal">
-    <h1> Maestro Licitações</h1>
-
-    <div class="instrucoes-box">
-      <p>📌 <strong>Importante:</strong> para que o bot mande as licitações para o seu número, você precisa enviar a mensagem <strong>"liberar chat"</strong> no chat do bot.</p>
-      <p>Ele avisará que seu chat foi liberado e passará a te enviar automaticamente todas as licitações que encontrar.</p>
+    <div id="tela-bloqueio">
+      <img src="logo.png" alt="Logo Maestro" style="margin-bottom: 20px; height: 60px; width: 60px; object-fit: contain;">
+      <h2>Ativação do Sistema</h2>
+      <p>Insira sua chave de acesso para liberar o Maestro nesta máquina.</p>
+      <div class="input-box">
+        <input type="text" id="input-chave" placeholder="CHAVE-DE-ACESSO" autocomplete="off">
+        <button id="btn-ativar">Ativar</button>
+      </div>
+      <p id="msg-erro">Chave inválida! Tente novamente.</p>
     </div>
 
-    <div id="area-qr">
-      <p>📱 Escaneie o QR code que será designado para o bot, será o número que irá te mandar mensagem.</p>
-      <img id="imagem-qr" src="" alt="QR Code">
-    </div>
+    <div id="tela-principal" style="display: none;">
+      <div class="topbar">
+        <div class="logo-container">
+          <img src="maestro-licita-redondo.png" alt="Maestro Logo" class="logo-img">
+          Maestro
+        </div>
+        <div class="status">
+          <div class="status-dot"></div>
+          Serviço Ativo
+        </div>
+      </div>
 
-    <button id="btn-atualizar">✨ Nova Atualização! Clique aqui para Instalar.</button>
-  </div>
+      <div class="content">
+        <div class="left">
+          <h1>Conecte o WhatsApp do bot</h1>
+          <p>Configure seu dispositivo para começar a receber automaticamente as licitações diretamente no WhatsApp.</p>
+          <div class="steps">
+            <div class="step">
+              <div class="step-number">1</div>
+              <div class="step-text">
+                <h3>Escaneie o QR Code</h3>
+                <span>Aponte a câmera do WhatsApp para o código à direita.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-number">2</div>
+              <div class="step-text">
+                <h3>Envie o comando</h3>
+                <span>Mande "liberar chat" para o número do bot.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-number">3</div>
+              <div class="step-text">
+                <h3>Pronto!</h3>
+                <span>As licitações serão enviadas automaticamente.</span>
+              </div>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn-primary" id="btn-reiniciar">Reiniciar conexão</button>
+            <button class="btn-secondary" id="btn-copiar">Copiar “liberar chat”</button>
+          </div>
+        </div>
 
-  <!-- Cantinho informativo transparente -->
-  <div class="info-canto">
-    <div>
-      📧 <span class="destaque">Suporte:</span> maestro.portais@tutamail.com
-    </div>
-    <div>
-      📞 <span class="destaque">Telefone:</span> (99) 99999-9999
-    </div>
-    <div class="creditos">
-      Desenvolvido por <span class="destaque">Allan Simão</span> & <span class="destaque">Lucas Borges</span>
+        <div class="right">
+          <div class="qr-wrapper">
+            <img id="imagem-qr" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' fill='none' stroke='%231ea35f' stroke-width='8' r='35' stroke-dasharray='164.9 56.9'><animateTransform attributeName='transform' type='rotate' repeatCount='indefinite' dur='1s' values='0 50 50;360 50 50'/></circle></svg>" alt="Aguardando QR...">
+          </div>
+          <div class="connection-info">
+            <h3>Aguardando Leitura</h3>
+            <p>Este QR Code é temporário e será atualizado caso necessário.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div>Desenvolvido por <strong>Allan Simão</strong> & <strong>Lucas Borges</strong></div>
+        <div>maestro.portais@tutamail.com</div>
+      </div>
     </div>
   </div>
 
   <script>
-    // ========== ATIVAÇÃO ==========
-    window.api.receberPedidoChave(() => {
-      document.getElementById('tela-bloqueio').style.display = 'block';
+    // BOTÕES FUNCIONAIS
+    const btnCopiar = document.getElementById('btn-copiar');
+    btnCopiar.addEventListener('click', () => {
+      navigator.clipboard.writeText('liberar chat');
+      const original = btnCopiar.innerText;
+      btnCopiar.innerText = 'Copiado! ✓';
+      btnCopiar.style.borderColor = '#1ea35f';
+      btnCopiar.style.color = '#1ea35f';
+      setTimeout(() => {
+        btnCopiar.innerText = original;
+        btnCopiar.style.borderColor = 'var(--border)';
+        btnCopiar.style.color = 'var(--text)';
+      }, 2000);
     });
 
-    document.getElementById('btn-ativar').addEventListener('click', () => {
-      const chaveDigitada = document.getElementById('input-chave').value.trim();
-      document.getElementById('msg-erro').style.display = 'none';
-      window.api.enviarChave(chaveDigitada);
+    document.getElementById('btn-reiniciar').addEventListener('click', () => {
+        document.getElementById('btn-reiniciar').innerText = 'Reiniciando...';
+        if(window.api && window.api.reiniciarApp) {
+            window.api.reiniciarApp();
+        } else {
+            window.location.reload();
+        }
     });
 
-    window.api.receberChaveInvalida(() => {
-      document.getElementById('msg-erro').style.display = 'block';
-    });
+    // INTEGRAÇÃO COM ELECTRON
+    if (window.api) {
+      window.api.receberPedidoChave(() => {
+        document.getElementById('tela-principal').style.display = 'none';
+        document.getElementById('tela-bloqueio').style.display = 'flex';
+      });
 
-    window.api.liberarAcesso(() => {
-      document.getElementById('tela-bloqueio').style.display = 'none';
-      document.getElementById('tela-principal').style.display = 'block';
-    });
+      document.getElementById('btn-ativar').addEventListener('click', () => {
+        window.api.enviarChave(document.getElementById('input-chave').value.trim());
+      });
 
-    // ========== QR CODE ==========
-    window.api.receberQRCode((event, base64) => {
-      const areaQr = document.getElementById('area-qr');
-      const imgQr = document.getElementById('imagem-qr');
-      areaQr.style.display = 'block';
-      imgQr.src = base64;
-    });
+      window.api.receberChaveInvalida(() => document.getElementById('msg-erro').style.display = 'block');
+      
+      window.api.liberarAcesso(() => {
+        document.getElementById('tela-bloqueio').style.display = 'none';
+        document.getElementById('tela-principal').style.display = 'flex';
+      });
 
-    // ========== ATUALIZAÇÃO ==========
-    const btnAtualizar = document.getElementById('btn-atualizar');
-    window.api.receberAvisoAtualizacao(() => {
-      btnAtualizar.style.display = 'block';
-    });
-
-    btnAtualizar.addEventListener('click', () => {
-      btnAtualizar.innerText = "Instalando... O app vai reiniciar.";
-      window.api.aplicarAtualizacao();
-    });
+      window.api.receberQRCode((event, base64) => {
+        document.getElementById('imagem-qr').src = base64;
+      });
+    } else {
+      document.getElementById('tela-principal').style.display = 'flex';
+    }
   </script>
 </body>
 </html>
