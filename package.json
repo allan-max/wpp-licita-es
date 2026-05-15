@@ -1,9 +1,13 @@
 {
   "name": "maestro-licita",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Sistema de Automação de licitacoes por WhatsApp",
   "author": "Allan Iglesias",
   "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/allan-max/wpp-licita-es.git"
+  },
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --win"
@@ -15,6 +19,9 @@
       "target": "nsis",
       "icon": "build/maestro-licita.ico"
     },
+    "extraResources": [
+      "assets/**"
+    ],
     "asarUnpack": [
       "node_modules/puppeteer-core/**"
     ],
@@ -22,7 +29,7 @@
       {
         "provider": "github",
         "owner": "allan-max",
-        "repo": "https://github.com/allan-max/wpp-licita-es"
+        "repo": "wpp-licita-es"
       }
     ]
   },

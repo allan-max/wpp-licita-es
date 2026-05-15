@@ -54,11 +54,33 @@ function createWindow() {
   autoUpdater.checkForUpdatesAndNotify();
 }
 
+// ==========================================
+// SISTEMA DE ATUALIZAÇÃO COM LOG DE RAIOS-X
+// ==========================================
+const logUpdate = (msg) => {
+  const logPath = path.join(app.getPath('userData'), 'log-atualizacao.txt');
+  fs.appendFileSync(logPath, `[${new Date().toLocaleString()}] ${msg}\n`);
+};
+
+autoUpdater.on('checking-for-update', () => logUpdate('Buscando atualizações no GitHub...'));
+
+autoUpdater.on('update-available', (info) => logUpdate(`Atualização ${info.version} encontrada! Começando o download...`));
+
+autoUpdater.on('update-not-available', (info) => logUpdate(`Nenhuma atualização. Versão da nuvem: ${info.version}`));
+
+autoUpdater.on('error', (err) => logUpdate(`ERRO NA ATUALIZAÇÃO: ${err.message}`));
+
+autoUpdater.on('download-progress', (progressObj) => {
+  logUpdate(`Baixando atualização: ${Math.round(progressObj.percent)}%`);
+});
+
 autoUpdater.on('update-downloaded', () => {
+  logUpdate('Download 100% concluído! Avisando o HTML para mostrar o botão verde.');
   if (mainWindow) mainWindow.webContents.send('atualizacao-pronta');
 });
 
 ipcMain.on('aplicar-atualizacao', () => {
+  logUpdate('O usuário clicou no botão verde. Fechando e instalando...');
   autoUpdater.quitAndInstall();
 });
 

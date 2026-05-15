@@ -306,6 +306,22 @@
     } else {
       document.getElementById('tela-principal').style.display = 'flex';
     }
+    // Quando o app baixar a atualização em segundo plano...
+    window.api.receberAvisoAtualizacao(() => {
+      // Cria um aviso verde no topo da tela
+      const aviso = document.createElement('div');
+      aviso.style = 'position: fixed; top: 0; left: 0; width: 100%; background: #1ea35f; color: white; text-align: center; padding: 15px; font-weight: bold; z-index: 9999; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px;';
+      
+      aviso.innerHTML = `🎉 Atualização Disponível! O Maestro baixou uma nova versão. <u>Clique aqui para reiniciar e instalar.</u>`;
+      
+      // Se o cliente clicar, o app fecha, atualiza e abre sozinho!
+      aviso.addEventListener('click', () => {
+        aviso.innerText = 'Instalando atualização...';
+        window.api.aplicarAtualizacao();
+      });
+
+      document.body.appendChild(aviso);
+    });
   </script>
 </body>
 </html>
