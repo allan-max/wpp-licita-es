@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,7 +16,7 @@
     }
 
     :root {
-      --bg-soft: #0d2238; /* Fundo principal do app */
+      --bg-soft: #0d2238; 
       --primary: #1ea35f;
       --primary-hover: #24bd6f;
       --text: #f4f7fb;
@@ -24,7 +24,6 @@
       --border: rgba(255,255,255,0.08);
     }
 
-    /* REMOVIDO O ESPAÇAMENTO E AS BORDAS PARA PREENCHER A TELA TODA */
     body {
       font-family: 'Inter', sans-serif;
       background: var(--bg-soft);
@@ -43,9 +42,7 @@
       position: relative;
     }
 
-    /* =========================================
-       TELA DE BLOQUEIO (DRM / LICENÇA)
-    ========================================= */
+    /* ECRÃ DE BLOQUEIO */
     #tela-bloqueio {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -78,9 +75,7 @@
 
     #msg-erro { color: #ff4d4d; margin-top: 2vh; display: none; font-weight: 600; }
 
-    /* =========================================
-       TELA PRINCIPAL
-    ========================================= */
+    /* ECRÃ PRINCIPAL */
     #tela-principal { display: flex; flex-direction: column; width: 100%; height: 100%; }
 
     .topbar {
@@ -102,7 +97,7 @@
     }
 
     .logo-img {
-      height: 32px; /* Tamanho fixo e elegante para a logo ao lado do texto */
+      height: 32px; 
       width: 32px;
       object-fit: contain;
     }
@@ -121,10 +116,10 @@
     }
 
     .left { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-    .left h1 { font-size: clamp(26px, 4.5vh, 40px); line-height: 1.1; margin-bottom: 2vh; letter-spacing: -1px; }
-    .left p { color: var(--text-soft); line-height: 1.6; font-size: clamp(13px, 1.8vh, 15px); margin-bottom: 4vh; }
+    .left h1 { font-size: clamp(26px, 4.5vh, 40px); line-height: 1.1; margin-bottom: 1.5vh; letter-spacing: -1px; }
+    .left p { color: var(--text-soft); line-height: 1.6; font-size: clamp(13px, 1.8vh, 15px); margin-bottom: 3vh; }
 
-    .steps { display: flex; flex-direction: column; gap: 2vh; margin-bottom: 4vh; }
+    .steps { display: flex; flex-direction: column; gap: 2vh; margin-bottom: 3vh; }
     .step { display: flex; align-items: flex-start; gap: 1vw; }
     .step-number {
       width: clamp(26px, 3.5vh, 32px); height: clamp(26px, 3.5vh, 32px);
@@ -134,6 +129,43 @@
     }
     .step-text h3 { font-size: clamp(14px, 1.9vh, 15px); margin-bottom: 2px; }
     .step-text span { color: var(--text-soft); font-size: clamp(11px, 1.7vh, 13px); line-height: 1.4; display: block; }
+
+    /* LISTA DE NÚMEROS VINCULADOS */
+    .authorized-list { 
+      margin-bottom: 3vh; 
+      background: rgba(0,0,0,0.15); 
+      padding: 1.5vh 1.5vw; 
+      border-radius: 12px; 
+      border: 1px solid var(--border); 
+      max-width: 400px;
+    }
+    .authorized-list h3 { 
+      font-size: clamp(12px, 1.7vh, 14px); 
+      margin-bottom: 1vh; 
+      color: #6ef0a4; 
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #lista-numeros { 
+      list-style: none; 
+      max-height: 80px; 
+      overflow-y: auto; 
+    }
+    #lista-numeros::-webkit-scrollbar { width: 4px; }
+    #lista-numeros::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+    #lista-numeros li { 
+      color: var(--text); 
+      font-size: clamp(11px, 1.6vh, 13px); 
+      padding: 0.5vh 0; 
+      border-bottom: 1px solid rgba(255,255,255,0.05); 
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #lista-numeros li:last-child { border-bottom: none; }
+    .empty-list { color: var(--text-soft) !important; font-style: italic; }
 
     .actions { display: flex; gap: 1vw; }
     .btn-primary {
@@ -149,12 +181,13 @@
     .btn-secondary:hover { background: rgba(255,255,255,0.08); }
 
     .right { display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
-    .qr-wrapper { background: white; padding: 2vh; border-radius: 20px; margin-bottom: 2vh; }
+    .qr-wrapper { background: white; padding: 2vh; border-radius: 20px; margin-bottom: 2vh; transition: 0.3s all; }
     #imagem-qr {
       width: clamp(150px, 28vh, 250px);
       height: clamp(150px, 28vh, 250px);
       object-fit: contain;
       display: block; border-radius: 10px;
+      transition: 0.3s all;
     }
     .connection-info { 
       display: flex; 
@@ -167,11 +200,12 @@
       font-size: clamp(16px, 2.2vh, 18px); 
       margin-bottom: 0.5vh; 
       font-weight: 600;
+      transition: 0.3s color;
     }
     .connection-info p { 
       color: var(--text-soft); 
       font-size: clamp(12px, 1.6vh, 14px); 
-      max-width: 280px; /* Mantém o texto da mesma largura do QR Code */
+      max-width: 280px;
       line-height: 1.4;
     }
 
@@ -186,7 +220,7 @@
     <div id="tela-bloqueio">
       <img src="logo.png" alt="Logo Maestro" style="margin-bottom: 20px; height: 60px; width: 60px; object-fit: contain;">
       <h2>Ativação do Sistema</h2>
-      <p>Insira sua chave de acesso para liberar o Maestro nesta máquina.</p>
+      <p>Insira a sua chave de acesso para libertar o Maestro nesta máquina.</p>
       <div class="input-box">
         <input type="text" id="input-chave" placeholder="CHAVE-DE-ACESSO" autocomplete="off">
         <button id="btn-ativar">Ativar</button>
@@ -197,7 +231,7 @@
     <div id="tela-principal" style="display: none;">
       <div class="topbar">
         <div class="logo-container">
-          <img src="maestro-licita-redondo.png" alt="Maestro Logo" class="logo-img">
+          <img src="logo.png" alt="Maestro Logo" class="logo-img">
           Maestro
         </div>
         <div class="status">
@@ -209,43 +243,54 @@
       <div class="content">
         <div class="left">
           <h1>Conecte o WhatsApp do bot</h1>
-          <p>Configure seu dispositivo para começar a receber automaticamente as licitações diretamente no WhatsApp.</p>
+          <p>Configure o seu dispositivo para começar a receber as licitações no WhatsApp automaticamente.</p>
           <div class="steps">
             <div class="step">
               <div class="step-number">1</div>
               <div class="step-text">
-                <h3>Escaneie o QR Code</h3>
-                <span>Aponte a câmera do WhatsApp para o código à direita.</span>
+                <h3>Faça o scan do QR Code</h3>
+                <span>Aponte a câmara do WhatsApp para o código à direita.</span>
               </div>
             </div>
             <div class="step">
               <div class="step-number">2</div>
               <div class="step-text">
                 <h3>Envie o comando</h3>
-                <span>Mande "liberar chat" para o número do bot.</span>
+                <span>Envie "liberar chat" para o número do bot.</span>
               </div>
             </div>
             <div class="step">
               <div class="step-number">3</div>
               <div class="step-text">
                 <h3>Pronto!</h3>
-                <span>As licitações serão enviadas automaticamente.</span>
+                <span>As licitações serão enviadas em tempo real.</span>
               </div>
             </div>
           </div>
+
+          <div class="authorized-list">
+            <h3>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+              Números Vinculados
+            </h3>
+            <ul id="lista-numeros">
+              <li class="empty-list">Nenhum chat libertado ainda.</li>
+            </ul>
+          </div>
+
           <div class="actions">
-            <button class="btn-primary" id="btn-reiniciar">Reiniciar conexão</button>
+            <button class="btn-primary" id="btn-reiniciar">Reiniciar ligação</button>
             <button class="btn-secondary" id="btn-copiar">Copiar “liberar chat”</button>
           </div>
         </div>
 
         <div class="right">
-          <div class="qr-wrapper">
-            <img id="imagem-qr" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' fill='none' stroke='%231ea35f' stroke-width='8' r='35' stroke-dasharray='164.9 56.9'><animateTransform attributeName='transform' type='rotate' repeatCount='indefinite' dur='1s' values='0 50 50;360 50 50'/></circle></svg>" alt="Aguardando QR...">
+          <div class="qr-wrapper" id="caixa-qr">
+            <img id="imagem-qr" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' fill='none' stroke='%231ea35f' stroke-width='8' r='35' stroke-dasharray='164.9 56.9'><animateTransform attributeName='transform' type='rotate' repeatCount='indefinite' dur='1s' values='0 50 50;360 50 50'/></circle></svg>" alt="A aguardar QR...">
           </div>
           <div class="connection-info">
-            <h3>Aguardando Leitura</h3>
-            <p>Este QR Code é temporário e será atualizado caso necessário.</p>
+            <h3 id="texto-status-titulo">A aguardar Leitura</h3>
+            <p id="texto-status-desc">Este QR Code é temporário e será atualizado caso seja necessário.</p>
           </div>
         </div>
       </div>
@@ -274,7 +319,7 @@
     });
 
     document.getElementById('btn-reiniciar').addEventListener('click', () => {
-        document.getElementById('btn-reiniciar').innerText = 'Reiniciando...';
+        document.getElementById('btn-reiniciar').innerText = 'A reiniciar...';
         if(window.api && window.api.reiniciarApp) {
             window.api.reiniciarApp();
         } else {
@@ -303,25 +348,69 @@
       window.api.receberQRCode((event, base64) => {
         document.getElementById('imagem-qr').src = base64;
       });
+      
+      if (window.api.whatsappConectado) {
+        window.api.whatsappConectado(() => {
+          // Substitui o QR code pelo Verto de Sucesso (SVG)
+          const imgQr = document.getElementById('imagem-qr');
+          imgQr.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' fill='%231ea35f' r='45'/><path d='M30 50 L45 65 L70 35' stroke='white' stroke-width='8' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>";
+          
+          document.getElementById('caixa-qr').style.background = 'transparent';
+          imgQr.style.width = '120px';
+          imgQr.style.height = '120px';
+
+          const h3 = document.getElementById('texto-status-titulo');
+          const p = document.getElementById('texto-status-desc');
+          
+          h3.innerText = 'WhatsApp Conectado!';
+          h3.style.color = '#1ea35f';
+          p.innerText = 'O seu robô está vinculado e pronto para enviar licitações automaticamente.';
+        });
+      }
+
+      // O SEGREDO DO NÚMERO APARECER: Este bloco agora é alimentado pelo preload e pelo main!
+      if (window.api.receberContatos) {
+        window.api.receberContatos((event, contatos) => {
+          const ul = document.getElementById('lista-numeros');
+          ul.innerHTML = ''; 
+          
+          if (!contatos || contatos.length === 0) {
+            ul.innerHTML = '<li class="empty-list">Nenhum chat libertado ainda.</li>';
+            return;
+          }
+
+          contatos.forEach(numero => {
+            const li = document.createElement('li');
+            const numeroLimpo = numero.replace('@c.us', '');
+            
+            li.innerHTML = `
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1ea35f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              ${numeroLimpo}
+            `;
+            ul.appendChild(li);
+          });
+        });
+      }
+
+      if (window.api.receberAvisoAtualizacao) {
+        window.api.receberAvisoAtualizacao(() => {
+          const aviso = document.createElement('div');
+          aviso.style = 'position: fixed; top: 0; left: 0; width: 100%; background: #1ea35f; color: white; text-align: center; padding: 15px; font-weight: bold; z-index: 9999; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px;';
+          
+          aviso.innerHTML = `🎉 Atualização Disponível! O Maestro baixou uma nova versão. <u>Clique aqui para reiniciar e instalar.</u>`;
+          
+          aviso.addEventListener('click', () => {
+            aviso.innerText = 'A instalar atualização...';
+            window.api.aplicarAtualizacao();
+          });
+
+          document.body.appendChild(aviso);
+        });
+      }
+      
     } else {
       document.getElementById('tela-principal').style.display = 'flex';
     }
-    // Quando o app baixar a atualização em segundo plano...
-    window.api.receberAvisoAtualizacao(() => {
-      // Cria um aviso verde no topo da tela
-      const aviso = document.createElement('div');
-      aviso.style = 'position: fixed; top: 0; left: 0; width: 100%; background: #1ea35f; color: white; text-align: center; padding: 15px; font-weight: bold; z-index: 9999; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px;';
-      
-      aviso.innerHTML = `🎉 Atualização Disponível! O Maestro baixou uma nova versão. <u>Clique aqui para reiniciar e instalar.</u>`;
-      
-      // Se o cliente clicar, o app fecha, atualiza e abre sozinho!
-      aviso.addEventListener('click', () => {
-        aviso.innerText = 'Instalando atualização...';
-        window.api.aplicarAtualizacao();
-      });
-
-      document.body.appendChild(aviso);
-    });
   </script>
 </body>
 </html>

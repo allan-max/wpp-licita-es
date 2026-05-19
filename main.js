@@ -14,7 +14,9 @@ let clientInstance = null;
 let tray = null;
 let processoDotNet = null;
 
+// ==========================================
 // 1. CONFIGURAÇÕES DA MÁQUINA E LICENÇA
+// ==========================================
 let hwidAtual;
 try {
   hwidAtual = machineIdSync(true); 
@@ -25,7 +27,9 @@ try {
 // ⚠️ COLOQUE O LINK DO SEU DISCORD AQUI ⚠️
 const WEBHOOK_DISCORD = 'https://discord.com/api/webhooks/1504491496668401924/TE9n3p4KYWlX2mPDAfXuzaw4Kvd2PZZ0yxytfzHYerbvrXKOqWbOTjcHvGdzxx8zb4B4';
 
+// ==========================================
 // 2. CONFIGURAÇÃO DA JANELA E AUTO-UPDATE
+// ==========================================
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 900,
@@ -40,9 +44,7 @@ function createWindow() {
   });
 
   mainWindow.loadFile('index.html');
-  //mainWindow.webContents.openDevTools();
 
-  // BLOQUEADOR DO BOTÃO X
   mainWindow.on('close', function (event) {
     if (!app.isQuiting) {
       event.preventDefault();
@@ -54,22 +56,15 @@ function createWindow() {
   autoUpdater.checkForUpdatesAndNotify();
 }
 
-// ==========================================
-// SISTEMA DE ATUALIZAÇÃO COM LOG DE RAIOS-X
-// ==========================================
 const logUpdate = (msg) => {
   const logPath = path.join(app.getPath('userData'), 'log-atualizacao.txt');
   fs.appendFileSync(logPath, `[${new Date().toLocaleString()}] ${msg}\n`);
 };
 
 autoUpdater.on('checking-for-update', () => logUpdate('Buscando atualizações no GitHub...'));
-
 autoUpdater.on('update-available', (info) => logUpdate(`Atualização ${info.version} encontrada! Começando o download...`));
-
 autoUpdater.on('update-not-available', (info) => logUpdate(`Nenhuma atualização. Versão da nuvem: ${info.version}`));
-
 autoUpdater.on('error', (err) => logUpdate(`ERRO NA ATUALIZAÇÃO: ${err.message}`));
-
 autoUpdater.on('download-progress', (progressObj) => {
   logUpdate(`Baixando atualização: ${Math.round(progressObj.percent)}%`);
 });
@@ -84,36 +79,29 @@ ipcMain.on('aplicar-atualizacao', () => {
   autoUpdater.quitAndInstall();
 });
 
+// ==========================================
 // 3. INICIALIZAÇÃO DO SISTEMA
+// ==========================================
 app.whenReady().then(() => {
   createWindow();
 
-ipcMain.on('reiniciar-app', () => {
-  if (processoDotNet) processoDotNet.kill(); // Derruba o C# por segurança
-  app.relaunch(); // Prepara o app para abrir de novo
-  app.quit();     // Fecha o app atual
-});
+  ipcMain.on('reiniciar-app', () => {
+    if (processoDotNet) processoDotNet.kill(); 
+    app.relaunch(); 
+    app.quit();     
+  });
 
-  // --- CONFIGURANDO A BANDEJA (TRAY) ---
   const iconPath = path.join(__dirname, 'assets/maestro-licita.ico');
   tray = new Tray(iconPath);
   
   const contextMenu = Menu.buildFromTemplate([
-    { 
-      label: 'Abrir Painel do Bot', 
-      click: function () { mainWindow.show(); } 
-    },
+    { label: 'Abrir Painel do Bot', click: function () { mainWindow.show(); } },
     { type: 'separator' },
     { 
       label: 'Encerrar Robô Completamente', 
       click: function () {
         app.isQuiting = true; 
-        
-        // MATANDO O PROCESSO .NET COM SEGURANÇA
-        if (processoDotNet) {
-            processoDotNet.kill();
-        }
-
+        if (processoDotNet) processoDotNet.kill();
         app.quit(); 
       } 
     }
@@ -123,18 +111,18 @@ ipcMain.on('reiniciar-app', () => {
   tray.setContextMenu(contextMenu);
   tray.on('double-click', () => { mainWindow.show(); });
 
-  // --- CHAMA O GUARDA DE TRÂNSITO (DRM) APENAS QUANDO O HTML CARREGAR ---
   mainWindow.webContents.once('did-finish-load', () => {
     gerenciarLicenca();
   });
 });
 
+// ==========================================
 // 4. SISTEMA DE LICENÇA (O GUARDA DE TRÂNSITO)
+// ==========================================
 function gerenciarLicenca() {
   const userDataPath = app.getPath('userData');
   const ARQUIVO_LICENCA = path.join(userDataPath, 'licenca.json');
 
-  // 1. Verifica se já existe licença ativa
   if (fs.existsSync(ARQUIVO_LICENCA)) {
     const licencaSalva = JSON.parse(fs.readFileSync(ARQUIVO_LICENCA, 'utf8'));
     if (licencaSalva.hwid === hwidAtual && licencaSalva.status === 'ativo') {
@@ -145,15 +133,12 @@ function gerenciarLicenca() {
     }
   }
 
-  // 2. Se não tem licença, gera a chave
   const novaChave = crypto.randomBytes(4).toString('hex').toUpperCase(); 
 
-  // Prepara a mensagem pro Discord
   const dados = JSON.stringify({ 
     content: `🚨 **Novo Acesso Detectado!**\n💻 HWID: \`${hwidAtual}\`\n🔑 Chave para o cliente: \`${novaChave}\`` 
   });
 
-  // Dispara a mensagem com o HTTPS raiz (À prova de falhas)
   const req = https.request(WEBHOOK_DISCORD, {
     method: 'POST',
     headers: {
@@ -171,13 +156,10 @@ function gerenciarLicenca() {
   req.write(dados);
   req.end();
 
-  // Trava a tela pedindo a chave
   mainWindow.webContents.send('pedir-chave', novaChave);
 
-  // Escuta a tentativa do cliente
   ipcMain.once('validar-chave', (event, chaveDigitada) => {
     if (chaveDigitada === novaChave) {
-      // Salva a chave para nunca mais pedir
       fs.writeFileSync(ARQUIVO_LICENCA, JSON.stringify({
         token: novaChave, hwid: hwidAtual, status: 'ativo'
       }, null, 2));
@@ -190,9 +172,30 @@ function gerenciarLicenca() {
   });
 }
 
+// ==========================================
+// 5. O CÉREBRO DO ROBÔ
+// ==========================================
 function iniciarBotDeVerdade() {
   const userDataPath = app.getPath('userData');
   const ARQUIVO_LOG = path.join(userDataPath, 'log-zap.txt');
+  const ARQUIVO_CONTATOS = path.join(userDataPath, 'contatos.json');
+  
+  let chatsLiberados = [];
+  let votacoesAtivas = {}; // A gaveta temporária das enquetes
+
+  try {
+    if (fs.existsSync(ARQUIVO_CONTATOS)) {
+      chatsLiberados = JSON.parse(fs.readFileSync(ARQUIVO_CONTATOS, 'utf8'));
+    } else {
+      fs.writeFileSync(ARQUIVO_CONTATOS, JSON.stringify([]));
+    }
+  } catch (erro) {
+    console.log(`Erro ao ler memória de contatos: ${erro.message}`);
+  }
+
+  function salvarContatos() {
+    fs.writeFileSync(ARQUIVO_CONTATOS, JSON.stringify(chatsLiberados, null, 2));
+  }
 
   function registrarLog(mensagem) {
     const linhaLog = `[${new Date().toLocaleString('pt-BR')}] ${mensagem}`;
@@ -203,65 +206,55 @@ function iniciarBotDeVerdade() {
 
   registrarLog('Iniciando o cérebro do Bot...');
 
-  // Variável que vai guardar o número do dono do robô
-  let numeroDoChefe = null; 
-
-  // INICIANDO O MOTOR .NET (C#) EM SEGUNDO PLANO
+  // --- MOTOR .NET ---
   const caminhoDotNet = path.join(__dirname, 'assets/dotnet/MaestroCore.exe');
-  
   if (fs.existsSync(caminhoDotNet)) {
     registrarLog('Dando a partida no motor .NET...');
-    
-    // Inicia o .exe de forma invisível
     processoDotNet = spawn(caminhoDotNet);
-
-    // Escuta o que o C# "falar" no terminal e joga no seu HTML!
-    processoDotNet.stdout.on('data', (dados) => {
-      registrarLog(`[.NET]: ${dados.toString().trim()}`);
-    });
-
-    processoDotNet.stderr.on('data', (erro) => {
-      registrarLog(`[ERRO .NET]: ${erro.toString().trim()}`);
-    });
+    processoDotNet.stdout.on('data', (dados) => registrarLog(`[.NET]: ${dados.toString().trim()}`));
+    processoDotNet.stderr.on('data', (erro) => registrarLog(`[ERRO .NET]: ${erro.toString().trim()}`));
   } else {
     registrarLog('Aviso: Arquivo do motor .NET não encontrado em assets/dotnet/');
   }
 
-  // API EXPRESS (A porta onde o .NET vai bater)
+  // --- SERVIDOR API ---
   const server = express();
   server.use(express.json());
 
-  // Rota que o .NET vai chamar quando achar uma licitação
   server.post('/novo-edital', async (req, res) => {
-    if (!clientInstance) {
-      return res.status(400).json({ erro: 'WhatsApp ainda não está conectado.' });
-    }
-    if (!numeroDoChefe) {
+    if (!clientInstance) return res.status(400).json({ erro: 'WhatsApp ainda não está conectado.' });
+    if (chatsLiberados.length === 0) {
       registrarLog('Um edital chegou, mas nenhum chat foi liberado ainda!');
       return res.status(400).json({ erro: 'Nenhum administrador liberou o chat.' });
     }
 
-    // Pega os dados que o .NET enviou
     const edital = req.body; 
-    
-    // Formata o Card Visual
-    const mensagemDetalhes = `🚨 *NOVO EDITAL ENCONTRADO!* 🚨\n\n` +
-      `🏢 *Órgão:* ${edital.orgao}\n` +
-      `📍 *Local de Serviço:* ${edital.local}\n` +
-      `💰 *Valor Estimado:* ${edital.valor}\n\n` +
-      `📄 *Objeto:* ${edital.objeto}`;
+    // Garante que o edital tenha um ID único para o sistema identificar
+    const idEdital = edital.id_edital || edital.id || Math.floor(Math.random() * 1000000).toString();
+
+    const mensagemCompleta = `🚨 *NOVO EDITAL ENCONTRADO!* 🚨\n\n🆔 *ID:* ${idEdital}\n🏢 *Órgão:* ${edital.orgao}\n📍 *Local de Serviço:* ${edital.local}\n💰 *Valor Estimado:* ${edital.valor}\n\n📄 *Objeto:* ${edital.objeto}\n\n👉 *Deseja participar desta licitação?*`;
 
     try {
-      // 1. Envia o texto
-      await clientInstance.sendText(numeroDoChefe, mensagemDetalhes);
-      
-      // 2. Envia a Enquete
-      await clientInstance.sendPollMessage(numeroDoChefe, 'Deseja participar desta licitação?', [
-        '✅ Sim, tenho interesse',
-        '❌ Não, pode descartar'
-      ], { selectableCount: 1 });
-      
-      registrarLog(`Edital enviado com sucesso para ${numeroDoChefe}`);
+      for (const numero of chatsLiberados) {
+        // Envia a licitação e guarda a referência da mensagem gerada
+        const msgEnviada = await clientInstance.sendPollMessage(numero, mensagemCompleta, [
+          '✅ Sim, tenho interesse',
+          '❌ Não, pode descartar'
+        ], { selectableCount: 1 });
+        
+        // Pega o ID único desta enquete específica
+        const enqueteId = typeof msgEnviada.id === 'object' ? msgEnviada.id._serialized : msgEnviada.id;
+
+        // Salva na memória, MAS NÃO INICIA O CRONÔMETRO AINDA! Fica aguardando o usuário.
+        votacoesAtivas[enqueteId] = {
+            numero: numero,
+            id_edital: idEdital,
+            votoAtual: null,
+            timerIniciado: false // A flag que controla se os 60 segundos já começaram
+        };
+
+        registrarLog(`Edital [${idEdital}] enviado e aguardando decisão de ${numero}`);
+      }
       res.status(200).json({ sucesso: true });
     } catch (erro) {
       registrarLog(`Erro ao enviar edital: ${erro.message}`);
@@ -273,7 +266,7 @@ function iniciarBotDeVerdade() {
     registrarLog(`API Local rodando na porta 3000`);
   });
 
-  // WPPCONNECT (O Motor do WhatsApp)
+  // --- WPPCONNECT ---
   wppconnect.create({
     session: 'sessao-api-bot',
     headless: true,
@@ -284,44 +277,88 @@ function iniciarBotDeVerdade() {
   }).then((client) => {
     clientInstance = client;
     registrarLog('WhatsApp Conectado com sucesso!');
+    
+    if (mainWindow) {
+        mainWindow.webContents.send('whatsapp-conectado');
+        mainWindow.webContents.send('atualizar-contatos', chatsLiberados);
+    }
 
-    // 1. O "OUVIDO" DE TEXTO: Lendo "liberar chat"
     client.onMessage((message) => {
       if (!message.isGroupMsg && message.body.toLowerCase() === 'liberar chat') {
-        numeroDoChefe = message.from; 
-        client.sendText(message.from, '✅ *Sistema Vinculado!*\nEste chat foi liberado e você passará a receber os alertas de licitação aqui.');
-        registrarLog(`Novo administrador atrelado ao número: ${message.from}`);
+        const numeroDoChefe = message.from; 
+        
+        if (!chatsLiberados.includes(numeroDoChefe)) {
+          chatsLiberados.push(numeroDoChefe);
+          salvarContatos(); 
+          registrarLog(`Novo administrador atrelado ao número: ${numeroDoChefe}`);
+          
+          if (mainWindow) mainWindow.webContents.send('atualizar-contatos', chatsLiberados);
+        }
+        
+        client.sendText(numeroDoChefe, '✅ *Sistema Vinculado!*\nEste chat foi liberado e você passará a receber os alertas de licitação aqui.');
       }
     });
 
-    // 2. A VIA DE VOLTA: Escutando a votação e enviando para o .NET
     client.onPollResponse(async (res) => {
       try {
-        const pacoteDeDados = JSON.stringify(res.selectedOptions || res).toLowerCase();
-        let foiAceito = false;
+        const enqueteId = typeof res.msgId === 'object' ? res.msgId._serialized : res.msgId;
 
-        if (pacoteDeDados.includes('aceitar') || pacoteDeDados.includes('sim')) {
-          foiAceito = true;
-          registrarLog(`[VOTO] Cliente ACEITOU a licitação! Avisando o motor .NET...`);
-        } else if (pacoteDeDados.includes('recusar') || pacoteDeDados.includes('não')) {
-          foiAceito = false;
-          registrarLog(`[VOTO] Cliente RECUSOU a licitação.`);
-        } else {
-          return; // Se desmarcou, não faz nada
+        // Verifica se essa enquete ainda está ativa na nossa memória
+        if (votacoesAtivas[enqueteId]) {
+            const dadosDaVotacao = votacoesAtivas[enqueteId];
+            const pacoteDeDados = JSON.stringify(res.selectedOptions || res).toLowerCase();
+            
+            // Registra a alteração do voto temporariamente
+            if (pacoteDeDados.includes('sim') || pacoteDeDados.includes('aceitar')) {
+                dadosDaVotacao.votoAtual = true;
+            } else if (pacoteDeDados.includes('não') || pacoteDeDados.includes('recusar') || pacoteDeDados.includes('descartar')) {
+                dadosDaVotacao.votoAtual = false;
+            } else {
+                return; // Se ele desmarcou a opção (array vazio), a gente só ignora
+            }
+
+            // O GRANDE TRUQUE: Inicia os 60 segundos APENAS na PRIMEIRA vez que ele vota
+            if (!dadosDaVotacao.timerIniciado) {
+                dadosDaVotacao.timerIniciado = true;
+                
+                registrarLog(`⏳ Primeiro clique recebido do ${dadosDaVotacao.numero}. Iniciando cronômetro de 1 minuto para o Edital [${dadosDaVotacao.id_edital}]...`);
+                await client.sendText(dadosDaVotacao.numero, `⏳ *Voto Recebido!*\nVocê tem *1 minuto* caso deseje mudar a sua resposta antes do envio oficial.`);
+
+                // O cronômetro de 60 segundos (60000 milissegundos)
+                setTimeout(async () => {
+                    // Pega o voto final exato daquele momento
+                    const votoFinal = votacoesAtivas[enqueteId].votoAtual;
+                    registrarLog(`🔒 Tempo esgotado! Voto definitivo do ${dadosDaVotacao.numero} para o Edital [${dadosDaVotacao.id_edital}] foi: ${votoFinal ? 'ACEITO' : 'RECUSADO'}.`);
+
+                    await client.sendText(dadosDaVotacao.numero, `✅ *Votação Encerrada!*\nSua resposta definitiva foi encaminhada ao sistema.`);
+
+                    // Envia a resposta oficial para a porta 5000 do .NET
+                    try {
+                        await fetch('http://localhost:5000/resposta-edital', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                telefone: dadosDaVotacao.numero,
+                                id_edital: dadosDaVotacao.id_edital,
+                                aprovado: votoFinal
+                            })
+                        });
+                    } catch (e) {
+                        registrarLog(`[ALERTA] Falha ao comunicar o voto ao .NET: ${e.message}`);
+                    }
+
+                    // Exclui a enquete da memória para liberar espaço
+                    delete votacoesAtivas[enqueteId];
+
+                }, 60000);
+
+            } else {
+                // Se o timer já começou e ele mudou o voto de novo, a gente só avisa no painel
+                registrarLog(`[ALTERAÇÃO] ${dadosDaVotacao.numero} trocou o voto para ${dadosDaVotacao.votoAtual ? 'SIM' : 'NÃO'} dentro do tempo.`);
+            }
         }
-
-        // Bate na porta do C# (5000) avisando da decisão
-        await fetch('http://localhost:5000/resposta-edital', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            telefone: res.sender,
-            aprovado: foiAceito
-          })
-        });
-
       } catch (erro) {
-        registrarLog(`Erro ao enviar decisão para o .NET: ${erro.message}`);
+        registrarLog(`Erro ao processar clique na enquete: ${erro.message}`);
       }
     });
 

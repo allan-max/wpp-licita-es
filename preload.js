@@ -11,6 +11,11 @@ contextBridge.exposeInMainWorld('api', {
   enviarChave: (chaveDigitada) => ipcRenderer.send('validar-chave', chaveDigitada),
   receberChaveInvalida: (callback) => ipcRenderer.on('chave-invalida', callback),
   liberarAcesso: (callback) => ipcRenderer.on('liberar-tela-principal', callback),
+  
+  whatsappConectado: (callback) => ipcRenderer.on('whatsapp-conectado', callback),
+  
+  // NOVA LINHA PARA RECEBER OS CONTATOS
+  receberContatos: (callback) => ipcRenderer.on('atualizar-contatos', callback),
 
   // COMANDO PARA REINICIAR TUDO
   reiniciarApp: () => ipcRenderer.send('reiniciar-app')
