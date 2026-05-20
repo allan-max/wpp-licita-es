@@ -9,11 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
       --bg-soft: #0d2238; 
@@ -28,37 +24,21 @@
       font-family: 'Inter', sans-serif;
       background: var(--bg-soft);
       color: var(--text);
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden; 
-      display: flex;
+      width: 100vw; height: 100vh;
+      overflow: hidden; display: flex;
     }
 
-    .container {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
+    .container { width: 100%; height: 100%; display: flex; flex-direction: column; position: relative; }
 
     /* ECRÃ DE BLOQUEIO */
     #tela-bloqueio {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: var(--bg-soft);
-      display: none; 
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 999;
-      padding: 4vw;
-      text-align: center;
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--bg-soft); display: none; flex-direction: column;
+      justify-content: center; align-items: center; z-index: 999; padding: 4vw; text-align: center;
     }
 
     #tela-bloqueio h2 { font-size: clamp(24px, 4vh, 32px); margin-bottom: 2vh; }
     #tela-bloqueio p { color: var(--text-soft); font-size: clamp(14px, 2vh, 16px); margin-bottom: 4vh; }
-    
     .input-box { display: flex; gap: 1vw; justify-content: center; align-items: center; }
 
     #input-chave {
@@ -72,48 +52,23 @@
       border-radius: 1vh; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s;
     }
     #btn-ativar:hover { background: var(--primary-hover); }
-
     #msg-erro { color: #ff4d4d; margin-top: 2vh; display: none; font-weight: 600; }
 
     /* ECRÃ PRINCIPAL */
     #tela-principal { display: flex; flex-direction: column; width: 100%; height: 100%; }
 
     .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 3vh 4vw;
-      border-bottom: 1px solid var(--border);
-      height: 12vh;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 3vh 4vw; border-bottom: 1px solid var(--border); height: 12vh;
     }
 
-    .logo-container {
-      display: flex;
-      align-items: center;
-      gap: 12px; 
-      font-size: clamp(18px, 3vh, 24px);
-      font-weight: 700;
-      color: white;
-    }
-
-    .logo-img {
-      height: 32px; 
-      width: 32px;
-      object-fit: contain;
-    }
+    .logo-container { display: flex; align-items: center; gap: 12px; font-size: clamp(18px, 3vh, 24px); font-weight: 700; color: white; }
+    .logo-img { height: 32px; width: 32px; object-fit: contain; }
 
     .status { display: flex; align-items: center; gap: 10px; color: #8de9b5; font-size: 14px; font-weight: 600; }
     .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #1ea35f; box-shadow: 0 0 10px #1ea35f; }
 
-    .content {
-      flex: 1;
-      display: flex;
-      padding: 2vh 5vw;
-      gap: 4vw;
-      align-items: center;
-      justify-content: space-between;
-      overflow: hidden;
-    }
+    .content { flex: 1; display: flex; padding: 2vh 5vw; gap: 4vw; align-items: center; justify-content: space-between; overflow: hidden; }
 
     .left { flex: 1; display: flex; flex-direction: column; justify-content: center; }
     .left h1 { font-size: clamp(26px, 4.5vh, 40px); line-height: 1.1; margin-bottom: 1.5vh; letter-spacing: -1px; }
@@ -124,101 +79,53 @@
     .step-number {
       width: clamp(26px, 3.5vh, 32px); height: clamp(26px, 3.5vh, 32px);
       border-radius: 8px; background: rgba(30,163,95,0.12); color: #6ef0a4;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 700; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0;
     }
     .step-text h3 { font-size: clamp(14px, 1.9vh, 15px); margin-bottom: 2px; }
     .step-text span { color: var(--text-soft); font-size: clamp(11px, 1.7vh, 13px); line-height: 1.4; display: block; }
 
-    /* LISTA DE NÚMEROS VINCULADOS */
-    .authorized-list { 
-      margin-bottom: 3vh; 
-      background: rgba(0,0,0,0.15); 
-      padding: 1.5vh 1.5vw; 
-      border-radius: 12px; 
-      border: 1px solid var(--border); 
-      max-width: 400px;
-    }
-    .authorized-list h3 { 
-      font-size: clamp(12px, 1.7vh, 14px); 
-      margin-bottom: 1vh; 
-      color: #6ef0a4; 
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    #lista-numeros { 
-      list-style: none; 
-      max-height: 80px; 
-      overflow-y: auto; 
-    }
+    .authorized-list { margin-bottom: 3vh; background: rgba(0,0,0,0.15); padding: 1.5vh 1.5vw; border-radius: 12px; border: 1px solid var(--border); max-width: 400px; }
+    .authorized-list h3 { font-size: clamp(12px, 1.7vh, 14px); margin-bottom: 1vh; color: #6ef0a4; display: flex; align-items: center; gap: 6px; }
+    #lista-numeros { list-style: none; max-height: 80px; overflow-y: auto; }
     #lista-numeros::-webkit-scrollbar { width: 4px; }
     #lista-numeros::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-
-    #lista-numeros li { 
-      color: var(--text); 
-      font-size: clamp(11px, 1.6vh, 13px); 
-      padding: 0.5vh 0; 
-      border-bottom: 1px solid rgba(255,255,255,0.05); 
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    #lista-numeros li { color: var(--text); font-size: clamp(11px, 1.6vh, 13px); padding: 0.5vh 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 8px; }
     #lista-numeros li:last-child { border-bottom: none; }
     .empty-list { color: var(--text-soft) !important; font-style: italic; }
 
     .actions { display: flex; gap: 1vw; }
-    .btn-primary {
-      background: var(--primary); color: white; border: none; padding: 1.5vh 1.8vw;
-      border-radius: 12px; font-size: clamp(12px, 1.7vh, 14px); font-weight: 600; cursor: pointer; transition: 0.2s;
-    }
+    .btn-primary { background: var(--primary); color: white; border: none; padding: 1.5vh 1.8vw; border-radius: 12px; font-size: clamp(12px, 1.7vh, 14px); font-weight: 600; cursor: pointer; transition: 0.2s; }
     .btn-primary:hover { background: var(--primary-hover); }
-
-    .btn-secondary {
-      background: transparent; border: 1px solid var(--border); color: var(--text);
-      padding: 1.5vh 1.8vw; border-radius: 12px; font-size: clamp(12px, 1.7vh, 14px); cursor: pointer; transition: 0.2s;
-    }
+    .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 1.5vh 1.8vw; border-radius: 12px; font-size: clamp(12px, 1.7vh, 14px); cursor: pointer; transition: 0.2s; }
     .btn-secondary:hover { background: rgba(255,255,255,0.08); }
 
     .right { display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
     .qr-wrapper { background: white; padding: 2vh; border-radius: 20px; margin-bottom: 2vh; transition: 0.3s all; }
-    #imagem-qr {
-      width: clamp(150px, 28vh, 250px);
-      height: clamp(150px, 28vh, 250px);
-      object-fit: contain;
-      display: block; border-radius: 10px;
-      transition: 0.3s all;
-    }
-    .connection-info { 
-      display: flex; 
-      flex-direction: column; 
-      align-items: center; 
-      text-align: center; 
-      margin-top: 1vh;
-    }
-    .connection-info h3 { 
-      font-size: clamp(16px, 2.2vh, 18px); 
-      margin-bottom: 0.5vh; 
-      font-weight: 600;
-      transition: 0.3s color;
-    }
-    .connection-info p { 
-      color: var(--text-soft); 
-      font-size: clamp(12px, 1.6vh, 14px); 
-      max-width: 280px;
-      line-height: 1.4;
-    }
+    #imagem-qr { width: clamp(150px, 28vh, 250px); height: clamp(150px, 28vh, 250px); object-fit: contain; display: block; border-radius: 10px; transition: 0.3s all; }
+    
+    .connection-info { display: flex; flex-direction: column; align-items: center; text-align: center; margin-top: 1vh; }
+    .connection-info h3 { font-size: clamp(16px, 2.2vh, 18px); margin-bottom: 0.5vh; font-weight: 600; transition: 0.3s color; }
+    .connection-info p { color: var(--text-soft); font-size: clamp(12px, 1.6vh, 14px); max-width: 280px; line-height: 1.4; }
 
     .footer { border-top: 1px solid var(--border); padding: 2vh 4vw; height: 8vh; display: flex; justify-content: space-between; align-items: center; color: var(--text-soft); font-size: clamp(10px, 1.5vh, 12px); }
     .footer strong { color: var(--text); font-weight: 600; }
+
+    /* 👇 ESTILO DO MARCADOR DE VERSÃO NO CANTO INFERIOR DIREITO */
+    #versao-app-label {
+      position: fixed; bottom: 10px; right: 15px;
+      font-size: 11px; color: var(--text-soft);
+      font-weight: 600; opacity: 0.6; z-index: 10000;
+      letter-spacing: 0.5px; pointer-events: none;
+    }
   </style>
 </head>
 <body>
 
-  <div class="container">
+  <div id="versao-app-label">v0.0.0</div>
 
+  <div class="container">
     <div id="tela-bloqueio">
-      <img src="logo.png" alt="Logo Maestro" style="margin-bottom: 20px; height: 60px; width: 60px; object-fit: contain;">
+      <img src="assets/logo.png" alt="Logo Maestro" style="margin-bottom: 20px; height: 60px; width: 60px; object-fit: contain;">
       <h2>Ativação do Sistema</h2>
       <p>Insira a sua chave de acesso para libertar o Maestro nesta máquina.</p>
       <div class="input-box">
@@ -231,7 +138,7 @@
     <div id="tela-principal" style="display: none;">
       <div class="topbar">
         <div class="logo-container">
-          <img src="logo.png" alt="Maestro Logo" class="logo-img">
+          <img src="assets/logo.png" alt="Maestro Logo" class="logo-img">
           Maestro
         </div>
         <div class="status">
@@ -303,31 +210,20 @@
   </div>
 
   <script>
-    // BOTÕES FUNCIONAIS
     const btnCopiar = document.getElementById('btn-copiar');
     btnCopiar.addEventListener('click', () => {
       navigator.clipboard.writeText('liberar chat');
-      const original = btnCopiar.innerText;
-      btnCopiar.innerText = 'Copiado! ✓';
-      btnCopiar.style.borderColor = '#1ea35f';
-      btnCopiar.style.color = '#1ea35f';
-      setTimeout(() => {
-        btnCopiar.innerText = original;
-        btnCopiar.style.borderColor = 'var(--border)';
-        btnCopiar.style.color = 'var(--text)';
-      }, 2000);
+      const original = btnCopiar.innerText; btnCopiar.innerText = 'Copiado! ✓';
+      btnCopiar.style.borderColor = '#1ea35f'; btnCopiar.style.color = '#1ea35f';
+      setTimeout(() => { btnCopiar.innerText = original; btnCopiar.style.borderColor = 'var(--border)'; btnCopiar.style.color = 'var(--text)'; }, 2000);
     });
 
     document.getElementById('btn-reiniciar').addEventListener('click', () => {
         document.getElementById('btn-reiniciar').innerText = 'A reiniciar...';
-        if(window.api && window.api.reiniciarApp) {
-            window.api.reiniciarApp();
-        } else {
-            window.location.reload();
-        }
+        if(window.api && window.api.reiniciarApp) window.api.reiniciarApp();
+        else window.location.reload();
     });
 
-    // INTEGRAÇÃO COM ELECTRON
     if (window.api) {
       window.api.receberPedidoChave(() => {
         document.getElementById('tela-principal').style.display = 'none';
@@ -345,69 +241,53 @@
         document.getElementById('tela-principal').style.display = 'flex';
       });
 
-      window.api.receberQRCode((event, base64) => {
-        document.getElementById('imagem-qr').src = base64;
-      });
+      window.api.receberQRCode((event, base64) => { document.getElementById('imagem-qr').src = base64; });
       
-      if (window.api.whatsappConectado) {
-        window.api.whatsappConectado(() => {
-          // Substitui o QR code pelo Verto de Sucesso (SVG)
-          const imgQr = document.getElementById('imagem-qr');
-          imgQr.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' fill='%231ea35f' r='45'/><path d='M30 50 L45 65 L70 35' stroke='white' stroke-width='8' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>";
-          
-          document.getElementById('caixa-qr').style.background = 'transparent';
-          imgQr.style.width = '120px';
-          imgQr.style.height = '120px';
+      window.api.whatsappConectado(() => {
+        const imgQr = document.getElementById('imagem-qr');
+        imgQr.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' fill='%231ea35f' r='45'/><path d='M30 50 L45 65 L70 35' stroke='white' stroke-width='8' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>";
+        document.getElementById('caixa-qr').style.background = 'transparent';
+        imgQr.style.width = '120px'; imgQr.style.height = '120px';
+        const h3 = document.getElementById('texto-status-titulo'); const p = document.getElementById('texto-status-desc');
+        h3.innerText = 'WhatsApp Conectado!'; h3.style.color = '#1ea35f';
+        p.innerText = 'O seu robô está vinculado e pronto para enviar licitações automaticamente.';
+      });
 
-          const h3 = document.getElementById('texto-status-titulo');
-          const p = document.getElementById('texto-status-desc');
-          
-          h3.innerText = 'WhatsApp Conectado!';
-          h3.style.color = '#1ea35f';
-          p.innerText = 'O seu robô está vinculado e pronto para enviar licitações automaticamente.';
+      window.api.receberContatos((event, contatos) => {
+        const ul = document.getElementById('lista-numeros'); ul.innerHTML = ''; 
+        if (!contatos || contatos.length === 0) { ul.innerHTML = '<li class="empty-list">Nenhum chat libertado ainda.</li>'; return; }
+        contatos.forEach(numero => {
+          const li = document.createElement('li'); const numeroLimpo = numero.replace('@c.us', '');
+          li.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1ea35f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>${numeroLimpo}`;
+          ul.appendChild(li);
+        });
+      });
+
+      // 👇 RECEBE A VERSÃO DO PROCESSO PRINCIPAL E EXIBE NO MARCADOR
+      if (window.api.receberVersao) {
+        window.api.receberVersao((event, versao) => {
+          document.getElementById('versao-app-label').innerText = `v${versao}`;
         });
       }
 
-      // O SEGREDO DO NÚMERO APARECER: Este bloco agora é alimentado pelo preload e pelo main!
-      if (window.api.receberContatos) {
-        window.api.receberContatos((event, contatos) => {
-          const ul = document.getElementById('lista-numeros');
-          ul.innerHTML = ''; 
-          
-          if (!contatos || contatos.length === 0) {
-            ul.innerHTML = '<li class="empty-list">Nenhum chat libertado ainda.</li>';
-            return;
-          }
-
-          contatos.forEach(numero => {
-            const li = document.createElement('li');
-            const numeroLimpo = numero.replace('@c.us', '');
-            
-            li.innerHTML = `
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1ea35f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-              ${numeroLimpo}
-            `;
-            ul.appendChild(li);
-          });
-        });
-      }
-
-      if (window.api.receberAvisoAtualizacao) {
-        window.api.receberAvisoAtualizacao(() => {
+      // 👇 BLOCO DE INTERCEPTAÇÃO DA ATUALIZAÇÃO SILENCIOSA E REINICIALIZAÇÃO DO APP
+      if (window.api.receberAtualizandoAutomatico) {
+        window.api.receberAtualizandoAutomatico((event, versao) => {
           const aviso = document.createElement('div');
-          aviso.style = 'position: fixed; top: 0; left: 0; width: 100%; background: #1ea35f; color: white; text-align: center; padding: 15px; font-weight: bold; z-index: 9999; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px;';
+          aviso.style = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13, 34, 56, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 99999; animation: fadeIn 0.3s ease; text-align: center; padding: 20px;';
           
-          aviso.innerHTML = `🎉 Atualização Disponível! O Maestro baixou uma nova versão. <u>Clique aqui para reiniciar e instalar.</u>`;
-          
-          aviso.addEventListener('click', () => {
-            aviso.innerText = 'A instalar atualização...';
-            window.api.aplicarAtualizacao();
-          });
-
+          aviso.innerHTML = `
+            <div style="width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.2); border-top-color: #1ea35f; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
+            <h2 style="color: white; font-size: 24px; margin-bottom: 10px;">Atualização Automática v${versao}</h2>
+            <p style="color: #9fb0c1; font-size: 16px; max-width: 400px; line-height: 1.5;">A aplicar melhorias no sistema. O Maestro será reiniciado em alguns instantes, por favor aguarde...</p>
+            <style>
+              @keyframes spin { to { transform: rotate(360deg); } }
+              @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            </style>
+          `;
           document.body.appendChild(aviso);
         });
       }
-      
     } else {
       document.getElementById('tela-principal').style.display = 'flex';
     }
