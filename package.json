@@ -17,10 +17,14 @@
     "npmRebuild": false,
     "win": {
       "target": "nsis",
-      "icon": "build/maestro-licita.ico"
+      "icon": "assets/maestro-licita.ico"
     },
     "extraResources": [
-      "assets/**"
+      {
+        "from": "assets/publish",
+        "to": "publish",
+        "filter": ["**/*"]
+      }
     ],
     "asarUnpack": [
       "node_modules/puppeteer-core/**"

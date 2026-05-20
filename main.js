@@ -7,7 +7,6 @@ const wppconnect = require('@wppconnect-team/wppconnect');
 const crypto = require('crypto');
 const { machineIdSync } = require('node-machine-id');
 const https = require('https'); 
-const http = require('http'); 
 const { spawn } = require('child_process'); 
 
 let mainWindow;
@@ -41,7 +40,6 @@ function createWindow() {
     return false;
   });
 
-  // Envia a versão atual do app para o HTML logo após carregar
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow.webContents.send('versao-app', app.getVersion());
   });
@@ -55,17 +53,15 @@ const logUpdate = (msg) => {
 };
 
 // =========================================================
-// 🚀 ATUALIZAÇÃO 100% AUTOMÁTICA (SEM PERGUNTAS)
+// 🚀 ATUALIZAÇÃO AUTOMÁTICA
 // =========================================================
 autoUpdater.on('update-downloaded', async (info) => {
   logUpdate(`Nova versão ${info.version} baixada. A atualizar em modo silencioso...`);
 
-  // 1. Avisa o ecrã da aplicação imediatamente
   if (mainWindow) {
     mainWindow.webContents.send('atualizando-automatico', info.version);
   }
 
-  // 2. Envia um aviso de texto simples para todos no WhatsApp
   if (clientInstance) {
     const ARQUIVO_CONTATOS = path.join(app.getPath('userData'), 'contatos.json');
     if (fs.existsSync(ARQUIVO_CONTATOS)) {
@@ -81,10 +77,7 @@ autoUpdater.on('update-downloaded', async (info) => {
     }
   }
 
-  // 3. Aguarda 4 segundos (tempo para envio das mensagens) e reinicia sozinho!
-  setTimeout(() => {
-    autoUpdater.quitAndInstall();
-  }, 4000);
+  setTimeout(() => autoUpdater.quitAndInstall(), 4000);
 });
 
 ipcMain.on('aplicar-atualizacao', () => autoUpdater.quitAndInstall());
@@ -107,9 +100,7 @@ app.whenReady().then(() => {
   tray.setContextMenu(contextMenu);
   tray.on('double-click', () => { mainWindow.show(); });
 
-  mainWindow.webContents.once('did-finish-load', () => {
-    gerenciarLicenca();
-  });
+  mainWindow.webContents.once('did-finish-load', () => gerenciarLicenca());
 });
 
 // ==========================================
@@ -141,9 +132,7 @@ function gerenciarLicenca() {
       fs.writeFileSync(ARQUIVO_LICENCA, JSON.stringify({ token: novaChave, hwid: hwidAtual, status: 'ativo' }, null, 2));
       mainWindow.webContents.send('liberar-tela-principal');
       iniciarBotDeVerdade();
-    } else {
-      mainWindow.webContents.send('chave-invalida');
-    }
+    } else { mainWindow.webContents.send('chave-invalida'); }
   });
 }
 
@@ -159,13 +148,11 @@ function iniciarBotDeVerdade() {
   let chatsLiberados = [];
   let votacoesAtivas = {}; 
 
-  // Carrega contatos
   try {
     if (fs.existsSync(ARQUIVO_CONTATOS)) chatsLiberados = JSON.parse(fs.readFileSync(ARQUIVO_CONTATOS, 'utf8'));
     else fs.writeFileSync(ARQUIVO_CONTATOS, JSON.stringify([]));
   } catch (erro) { console.log(`Erro memória contatos: ${erro.message}`); }
 
-  // Carrega votações pendentes
   try {
     if (fs.existsSync(ARQUIVO_VOTACOES)) votacoesAtivas = JSON.parse(fs.readFileSync(ARQUIVO_VOTACOES, 'utf8'));
     else fs.writeFileSync(ARQUIVO_VOTACOES, JSON.stringify({}));
@@ -181,15 +168,18 @@ function iniciarBotDeVerdade() {
     if (mainWindow) mainWindow.webContents.send('novo-log', linhaLog);
   }
 
-  registrarLog('A iniciar o cérebro do Bot de forma sequencial...');
+  registrarLog('A iniciar o cérebro do Bot (Hub Central)...');
 
-  const server = express();
-  server.use(express.json());
+  // ========================================================
+  // 📥 SERVIDOR 1 (PORTA 3000): OUVIR EDITAIS DO C#
+  // ========================================================
+  const server3000 = express();
+  server3000.use(express.json());
 
-  server.get('/', (req, res) => res.json({ status: 'ok' }));
-  server.get('/health', (req, res) => res.json({ status: 'ok' }));
+  server3000.get('/', (req, res) => res.json({ status: 'API 3000 Online' }));
+  server3000.get('/health', (req, res) => res.json({ status: 'ok' }));
 
-  server.post('/novo-edital', async (req, res) => {
+  server3000.post('/novo-edital', async (req, res) => {
     res.json({ status: 'recebido' });
     registrarLog('📥 Recebido do C#: Novo Edital em processamento...');
 
@@ -213,36 +203,50 @@ function iniciarBotDeVerdade() {
     } catch (erro) { registrarLog(`Erro ao enviar edital: ${erro.message}`); }
   });
 
-  server.listen(3000, 'localhost', () => {
-    registrarLog(`API Local a correr em http://localhost:3000`);
+  // ========================================================
+  // 📤 SERVIDOR 2 (PORTA 5000): CAIXA DE CORREIO DOS VOTOS
+  // ========================================================
+  const server5000 = express();
+  server5000.use(express.json());
+  
+  let gavetaDeVotos = [];
 
-    const caminhoDotNet = app.isPackaged 
-        ? path.join(process.resourcesPath, 'publish', 'Welington II.exe')
-        : path.join(__dirname, 'assets', 'publish', 'Welington II.exe');
+  server5000.get('/', (req, res) => res.json({ status: 'API 5000 (Gaveta) Online' }));
 
-    if (fs.existsSync(caminhoDotNet)) {
-      registrarLog('A iniciar motor .NET...');
-      processoDotNet = spawn(caminhoDotNet);
-      processoDotNet.stdout.on('data', (dados) => registrarLog(`[.NET]: ${dados.toString().trim()}`));
-      processoDotNet.stderr.on('data', (erro) => registrarLog(`[ERRO .NET]: ${erro.toString().trim()}`));
+  // O próprio Node guarda aqui o voto quando o tempo de 1 min esgota
+  server5000.post('/resposta-edital', (req, res) => {
+      gavetaDeVotos.push(req.body);
+      res.json({ status: 'guardado' });
+  });
 
-      function mandarCheckParaDotNet() {
-        registrarLog('⏳ A aguardar .NET iniciar na porta 5000...');
-        
-        fetch('http://localhost:5000/')
-          .then(() => {
-            registrarLog('🟢 Aperto de mão estabelecido! O .NET respondeu ao Check.');
-            iniciarWhatsApp();
-          })
-          .catch((err) => {
-            setTimeout(mandarCheckParaDotNet, 1500);
-          });
+  // 👇 O SEU C# VAI CHAMAR ESTA ROTA PARA PUXAR OS VOTOS!
+  server5000.get('/resposta-edital', (req, res) => {
+      res.json(gavetaDeVotos);
+      gavetaDeVotos = []; // Limpa a gaveta após o C# ler
+  });
+
+  // ========================================================
+  // 🚀 ARRANQUE DOS MOTORES E WPPCONNECT
+  // ========================================================
+  server5000.listen(5000, 'localhost', () => {
+    registrarLog(`📬 Gaveta de Votos a correr em http://localhost:5000`);
+    
+    server3000.listen(3000, 'localhost', () => {
+      registrarLog(`📡 Receção de Editais a correr em http://localhost:3000`);
+
+      const caminhoDotNet = app.isPackaged ? path.join(process.resourcesPath, 'publish', 'Welington II.exe') : path.join(__dirname, 'assets', 'publish', 'Welington II.exe');
+      if (fs.existsSync(caminhoDotNet)) {
+        registrarLog('A iniciar motor .NET...');
+        processoDotNet = spawn(caminhoDotNet);
+        processoDotNet.stdout.on('data', (dados) => registrarLog(`[.NET]: ${dados.toString().trim()}`));
+        processoDotNet.stderr.on('data', (erro) => registrarLog(`[ERRO .NET]: ${erro.toString().trim()}`));
+      } else {
+        registrarLog(`Aviso: Welington II.exe não encontrado.`);
       }
-      setTimeout(mandarCheckParaDotNet, 2000);
-    } else {
-      registrarLog(`Aviso: Welington II.exe não encontrado. A iniciar só o WPP.`);
+
+      // Inicia o WhatsApp imediatamente pois as portas já estão garantidas
       iniciarWhatsApp();
-    }
+    });
   });
 
   function iniciarWhatsApp() {
@@ -293,13 +297,15 @@ function iniciarBotDeVerdade() {
               if (!dadosDaVotacao.timerIniciado) {
                   dadosDaVotacao.timerIniciado = true;
                   salvarVotacoes();
-                  registrarLog(`⏳ Clique recebido. Cronómetro de 1 minuto ativado para o Edital [${dadosDaVotacao.id_edital}]...`);
-                  await client.sendText(dadosDaVotacao.numero, `⏳ *Voto Recebido - Edital ID: ${dadosDaVotacao.id_edital}*\nTem *1 minuto* caso deseje mudar a sua resposta antes do envio oficial.`);
+                  registrarLog(`⏳ Clique recebido do Edital [${dadosDaVotacao.id_edital}]. Reagindo com ⏳...`);
+                  
+                  await client.sendReactionToMessage(enqueteId, '⏳');
 
                   setTimeout(async () => {
                       const votoFinal = votacoesAtivas[enqueteId].votoAtual;
-                      registrarLog(`🔒 Tempo esgotado! Voto definitivo de ${dadosDaVotacao.numero} enviado.`);
-                      await client.sendText(dadosDaVotacao.numero, `✅ *Votação Encerrada - Edital ID: ${dadosDaVotacao.id_edital}*\nA sua resposta definitiva foi encaminhada ao sistema.`);
+                      registrarLog(`🔒 Tempo esgotado para o Edital [${dadosDaVotacao.id_edital}]. Trocando reação para ✅.`);
+                      
+                      await client.sendReactionToMessage(enqueteId, '✅');
 
                       const resposta = {
                           telefone: dadosDaVotacao.numero,
@@ -307,14 +313,21 @@ function iniciarBotDeVerdade() {
                           aprovado: votoFinal
                       };
 
+                      registrarLog(`\n======================================================`);
+                      registrarLog(`📤 A GUARDAR VOTO NA GAVETA (PORTA 5000)`);
+                      registrarLog(`PAYLOAD (JSON):`);
+                      registrarLog(JSON.stringify(resposta, null, 2));
+                      registrarLog(`======================================================\n`);
+
+                      // O Node guarda na sua PRÓPRIA porta 5000 para o C# vir buscar depois
                       fetch('http://localhost:5000/resposta-edital', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify(resposta)
-                      }).then(() => {
-                          registrarLog(`📤 [SUCESSO] Resposta do Edital ${dadosDaVotacao.id_edital} enviada para o C#.`);
+                      }).then((respostaLocal) => {
+                          registrarLog(`🟢 [SUCESSO] Voto guardado na gaveta do Node. Pronto para o C# o recolher!`);
                       }).catch(err => {
-                          registrarLog(`❌ [ALERTA] Erro ao enviar resposta para o C#: ${err}`);
+                          registrarLog(`❌ [ALERTA] Falha na gaveta local: ${err}`);
                       });
 
                       delete votacoesAtivas[enqueteId];
@@ -324,7 +337,7 @@ function iniciarBotDeVerdade() {
 
               } else {
                   salvarVotacoes();
-                  registrarLog(`[ALTERAÇÃO] ${dadosDaVotacao.numero} trocou o voto dentro do tempo.`);
+                  registrarLog(`[ALTERAÇÃO] ${dadosDaVotacao.numero} trocou o voto do Edital [${dadosDaVotacao.id_edital}] dentro do tempo.`);
               }
           }
         } catch (erro) { registrarLog(`Erro na enquete: ${erro.message}`); }
