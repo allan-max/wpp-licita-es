@@ -246,8 +246,8 @@ function iniciarBotDeVerdade() {
     } catch (erro) { registrarLog(`Erro ao enviar edital da fila: ${erro.message}`); }
 
     if (filaDeEditais.length > 0) {
-        registrarLog(`⏳ Fila ativa: Aguardando 1 minuto de segurança para enviar o próximo... (${filaDeEditais.length} na fila)`);
-        setTimeout(processarProximoEdital, 60000); 
+        registrarLog(`⏳ Fila ativa: Aguardando 15 segundos de segurança para enviar o próximo... (${filaDeEditais.length} na fila)`);
+        setTimeout(processarProximoEdital, 15000); 
     } else {
         processarProximoEdital(); 
     }
