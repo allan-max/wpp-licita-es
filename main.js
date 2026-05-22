@@ -340,44 +340,44 @@ function iniciarBotDeVerdade() {
               registrarLog(`⏳ Tempo iniciado para o Edital [${dadosDaVotacao.id_edital}].`);
 
               setTimeout(async () => {
-                const votoFinal = votacoesAtivas[enqueteId].votoAtual;
+                    const votoFinal = votacoesAtivas[enqueteId].votoAtual;
+                    registrarLog(`🔒 Tempo esgotado para o Edital [${dadosDaVotacao.id_edital}]. Trocando reação para ✅.`);
+                    
+                    await client.sendReactionToMessage(enqueteId, '✅');
 
-                // REAÇÃO 2: Certinho verde indicando que foi processado e enviado
-                await client.sendReactionToMessage(enqueteId, '✅');
-                registrarLog(`✅ Tempo esgotado para o Edital [${dadosDaVotacao.id_edital}]. Voto enviado.`);
+                    // EXATAMENTE O FORMATO QUE O SEU C# ENTENDE
+                    const resposta = { 
+                        telefone: dadosDaVotacao.numero, 
+                        id_edital: dadosDaVotacao.id_edital, 
+                        aprovado: votoFinal 
+                    };
 
-                const resposta = {
-                  telefone: dadosDaVotacao.numero,
-                  id_edital: dadosDaVotacao.id_edital,
-                  aprovado: votoFinal
-                };
-                const payload = JSON.stringify(resposta);
+                    registrarLog(`\n======================================================`);
+                    registrarLog(`📤 A ENVIAR VOTO USANDO FETCH (localhost:8080)`);
+                    registrarLog(`PAYLOAD: ${JSON.stringify(resposta)}`);
+                    registrarLog(`======================================================\n`);
 
-                // ENVIO PARA O .NET (Como você pediu, usando a forma nativa)
-                const reqNet = http.request({
-                  hostname: '127.0.0.1',
-                  port: 8080, // 👈 Alterado de 5000 para 8080
-                  path: '/resposta-edital',
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Content-Length': Buffer.byteLength(payload)
-                  }
-                }, (resNet) => {
-                  registrarLog(`🟢 [SUCESSO] Comunicação C# finalizada. Status: ${resNet.statusCode}`);
-                });
+                    // 👇 O SEU CÓDIGO DE TESTE APLICADO NO BOT (Apontando para 8080)
+                    fetch('http://localhost:8080/resposta-edital', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(resposta)
+                    }).then(async (resFetch) => {
+                        if (resFetch.ok) {
+                            registrarLog(`🟢 [SUCESSO REAL] O C# engoliu o pacote! Status: ${resFetch.status}`);
+                        } else {
+                            // Se o C# der 400 de novo, isto vai ler o motivo exato que o C# reclamou!
+                            const textoErro = await resFetch.text();
+                            registrarLog(`⚠️ [AVISO] O C# atendeu, mas recusou (Status ${resFetch.status}): ${textoErro}`);
+                        }
+                    }).catch(err => {
+                        registrarLog(`❌ [ERRO] Falha ao conectar no C#: ${err.message}`);
+                    });
 
-                reqNet.on('error', (err) => {
-                  registrarLog(`❌ [ERRO] Falha ao enviar para o C#: ${err.message}`);
-                });
+                    delete votacoesAtivas[enqueteId];
+                    salvarVotacoes();
 
-                reqNet.write(payload);
-                reqNet.end();
-
-                delete votacoesAtivas[enqueteId];
-                salvarVotacoes();
-
-              }, 60000); // 1 minuto de espera
+                }, 60000); // 1 minuto de espera // 1 minuto de espera
 
             } else {
               // Se o usuário clicar novamente, apenas salvamos o novo voto silenciosamente
