@@ -7,7 +7,7 @@ const wppconnect = require('@wppconnect-team/wppconnect');
 const crypto = require('crypto');
 const { machineIdSync } = require('node-machine-id');
 const https = require('https');
-const http = require('http'); // 👈 A NOSSA FERRAMENTA BLINDADA
+const http = require('http'); 
 const { spawn } = require('child_process');
 
 let mainWindow;
@@ -31,7 +31,7 @@ const logPath = path.join(app.getPath('userData'), 'log-atualizacao.txt');
 const logUpdate = (msg) => {
   const linhaLog = `[${new Date().toLocaleString('pt-PT')}] ${msg}\n`;
   console.log(linhaLog);
-  try { fs.appendFileSync(logPath, linhaLog); } catch (e) { }
+  try { fs.appendFileSync(logPath, linhaLog); } catch (e) {}
 };
 
 autoUpdater.on('checking-for-update', () => logUpdate('🔍 Conectando ao GitHub... Procurando nova versão.'));
@@ -60,9 +60,14 @@ autoUpdater.on('update-downloaded', async (info) => {
   setTimeout(async () => {
     logUpdate('Iniciando protocolo de aniquilação para liberar os ficheiros...');
     if (processoDotNet) { processoDotNet.kill(); }
-    if (clientInstance) { try { await clientInstance.close(); } catch (e) { } }
-    app.removeAllListeners('window-all-closed');
-    autoUpdater.quitAndInstall(false, true);
+    if (clientInstance) { try { await clientInstance.close(); } catch(e) {} }
+    
+    // 👇 A MÁGICA ACONTECE AQUI 👇
+    app.isQuiting = true; // Avisa o Electron: "Não é para esconder na bandeja, é para fechar MESMO!"
+    if (tray) tray.destroy(); // Destrói o ícone do relógio instantaneamente para libertar o Windows
+    
+    app.removeAllListeners('window-all-closed'); 
+    autoUpdater.quitAndInstall(false, true); 
   }, 5000);
 });
 
@@ -77,16 +82,27 @@ function createWindow() {
     webPreferences: { preload: path.join(__dirname, 'preload.js'), nodeIntegration: false, contextIsolation: true }
   });
   mainWindow.loadFile('index.html');
+  
   mainWindow.on('close', function (event) {
-    if (!app.isQuiting) { event.preventDefault(); mainWindow.hide(); }
+    // Se não for para fechar de verdade, cancela e esconde
+    if (!app.isQuiting) { 
+        event.preventDefault(); 
+        mainWindow.hide(); 
+    }
     return false;
   });
+  
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow.webContents.send('versao-app', app.getVersion());
   });
 }
 
-ipcMain.on('aplicar-atualizacao', () => autoUpdater.quitAndInstall());
+// 👇 Também corrigido para quando a atualização é aplicada manualmente pelo cliente
+ipcMain.on('aplicar-atualizacao', () => {
+    app.isQuiting = true;
+    if (tray) tray.destroy();
+    autoUpdater.quitAndInstall();
+});
 
 app.whenReady().then(() => {
   logUpdate(`\n=================================================`);
@@ -98,26 +114,33 @@ app.whenReady().then(() => {
   setTimeout(() => {
     logUpdate(`Iniciando verificação inicial de atualizações...`);
     if (!app.isPackaged) {
-      logUpdate(`❌ AVISO: O Auto-Updater NÃO funciona usando 'npm start'.`);
+        logUpdate(`❌ AVISO: O Auto-Updater NÃO funciona usando 'npm start'.`);
     } else {
-      autoUpdater.checkForUpdatesAndNotify();
-      setInterval(() => {
-        logUpdate(`🔄 Ronda Automática do Radar: Verificando se o desenvolvedor lançou novidades...`);
         autoUpdater.checkForUpdatesAndNotify();
-      }, 30 * 60 * 1000);
+        setInterval(() => {
+            logUpdate(`🔄 Ronda Automática do Radar: Verificando se o desenvolvedor lançou novidades...`);
+            autoUpdater.checkForUpdatesAndNotify();
+        }, 30 * 60 * 1000); 
     }
   }, 5000);
 
   ipcMain.on('reiniciar-app', () => {
-    if (processoDotNet) processoDotNet.kill();
-    app.relaunch(); app.quit();
+    app.isQuiting = true;
+    if (tray) tray.destroy();
+    if (processoDotNet) processoDotNet.kill(); 
+    app.relaunch(); app.quit();     
   });
 
   tray = new Tray(path.join(__dirname, 'assets/maestro-licita.ico'));
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Abrir Painel do Bot', click: function () { mainWindow.show(); } },
     { type: 'separator' },
-    { label: 'Encerrar Robô Completamente', click: function () { app.isQuiting = true; if (processoDotNet) processoDotNet.kill(); app.quit(); } }
+    { label: 'Encerrar Robô Completamente', click: function () { 
+        app.isQuiting = true; 
+        if (tray) tray.destroy();
+        if (processoDotNet) processoDotNet.kill(); 
+        app.quit(); 
+    } }
   ]);
   tray.setToolTip('Maestro Licitações - A Correr');
   tray.setContextMenu(contextMenu);
@@ -138,15 +161,15 @@ function gerenciarLicenca() {
     if (licencaSalva.hwid === hwidAtual && licencaSalva.status === 'ativo') {
       mainWindow.webContents.send('liberar-tela-principal');
       iniciarBotDeVerdade();
-      return;
+      return; 
     }
   }
 
-  const novaChave = crypto.randomBytes(4).toString('hex').toUpperCase();
+  const novaChave = crypto.randomBytes(4).toString('hex').toUpperCase(); 
   const dados = JSON.stringify({ content: `🚨 **Novo Acesso Detectado!**\n💻 HWID: \`${hwidAtual}\`\n🔑 Chave para o cliente: \`${novaChave}\`` });
 
-  const req = https.request(WEBHOOK_DISCORD, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(dados) } }, (res) => { });
-  req.on('error', () => { }); req.write(dados); req.end();
+  const req = https.request(WEBHOOK_DISCORD, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(dados) } }, (res) => {});
+  req.on('error', () => {}); req.write(dados); req.end();
 
   mainWindow.webContents.send('pedir-chave', novaChave);
 
@@ -164,9 +187,9 @@ function iniciarBotDeVerdade() {
   const ARQUIVO_LOG = path.join(userDataPath, 'log-zap.txt');
   const ARQUIVO_CONTATOS = path.join(userDataPath, 'contatos.json');
   const ARQUIVO_VOTACOES = path.join(userDataPath, 'votacoes.json');
-
+  
   let chatsLiberados = [];
-  let votacoesAtivas = {};
+  let votacoesAtivas = {}; 
 
   let filaDeEditais = [];
   let processandoFila = false;
@@ -174,12 +197,12 @@ function iniciarBotDeVerdade() {
   try {
     if (fs.existsSync(ARQUIVO_CONTATOS)) chatsLiberados = JSON.parse(fs.readFileSync(ARQUIVO_CONTATOS, 'utf8'));
     else fs.writeFileSync(ARQUIVO_CONTATOS, JSON.stringify([]));
-  } catch (erro) { }
+  } catch (erro) {}
 
   try {
     if (fs.existsSync(ARQUIVO_VOTACOES)) votacoesAtivas = JSON.parse(fs.readFileSync(ARQUIVO_VOTACOES, 'utf8'));
     else fs.writeFileSync(ARQUIVO_VOTACOES, JSON.stringify({}));
-  } catch (erro) { }
+  } catch (erro) {}
 
   function salvarContatos() { fs.writeFileSync(ARQUIVO_CONTATOS, JSON.stringify(chatsLiberados, null, 2)); }
   function salvarVotacoes() { fs.writeFileSync(ARQUIVO_VOTACOES, JSON.stringify(votacoesAtivas, null, 2)); }
@@ -196,37 +219,37 @@ function iniciarBotDeVerdade() {
   // =======================================================
   async function processarProximoEdital() {
     if (filaDeEditais.length === 0) {
-      processandoFila = false;
-      registrarLog('✅ Todos os editais da fila foram enviados!');
-      return;
+        processandoFila = false;
+        registrarLog('✅ Todos os editais da fila foram enviados!');
+        return;
     }
 
     processandoFila = true;
-
-    const edital = filaDeEditais.shift();
+    
+    const edital = filaDeEditais.shift(); 
     const idEdital = edital.id_edital || edital.id || Math.floor(Math.random() * 1000000).toString();
     const mensagemCompleta = `🚨 *NOVO EDITAL ENCONTRADO!* 🚨\n\n🆔 *ID:* ${idEdital}\n🏢 *Órgão:* ${edital.orgao}\n📍 *Local de Serviço:* ${edital.local}\n💰 *Valor Estimado:* ${edital.valor}\n\n📄 *Objeto:* ${edital.objeto}\n\n👉 *Deseja participar desta licitação?*`;
 
     let enviouParaAlguem = false;
 
     try {
-      for (const numero of chatsLiberados) {
-        const msgEnviada = await clientInstance.sendPollMessage(numero, mensagemCompleta, [
-          '✅ Sim, tenho interesse', '❌ Não, pode descartar'
-        ]);
-
-        const enqueteId = typeof msgEnviada.id === 'object' ? msgEnviada.id._serialized : msgEnviada.id;
-        votacoesAtivas[enqueteId] = { numero: numero, id_edital: idEdital, votoAtual: null, timerIniciado: false };
-        enviouParaAlguem = true;
-      }
-      if (enviouParaAlguem) salvarVotacoes();
+        for (const numero of chatsLiberados) {
+            const msgEnviada = await clientInstance.sendPollMessage(numero, mensagemCompleta, [
+                '✅ Sim, tenho interesse', '❌ Não, pode descartar'
+            ]);
+            
+            const enqueteId = typeof msgEnviada.id === 'object' ? msgEnviada.id._serialized : msgEnviada.id;
+            votacoesAtivas[enqueteId] = { numero: numero, id_edital: idEdital, votoAtual: null, timerIniciado: false };
+            enviouParaAlguem = true;
+        }
+        if (enviouParaAlguem) salvarVotacoes();
     } catch (erro) { registrarLog(`Erro ao enviar edital da fila: ${erro.message}`); }
 
     if (filaDeEditais.length > 0) {
-      registrarLog(`⏳ Fila ativa: Aguardando 1 minuto de segurança para enviar o próximo... (${filaDeEditais.length} na fila)`);
-      setTimeout(processarProximoEdital, 30000);
+        registrarLog(`⏳ Fila ativa: Aguardando 1 minuto de segurança para enviar o próximo... (${filaDeEditais.length} na fila)`);
+        setTimeout(processarProximoEdital, 60000); 
     } else {
-      processarProximoEdital();
+        processarProximoEdital(); 
     }
   }
 
@@ -255,9 +278,9 @@ function iniciarBotDeVerdade() {
   server3000.listen(3000, '127.0.0.1', () => {
     registrarLog(`📡 Receção de Editais a correr em http://127.0.0.1:3000`);
 
-    const caminhoDotNet = app.isPackaged
-      ? path.join(process.resourcesPath, 'publish', 'Welington II.exe')
-      : path.join(__dirname, 'assets', 'publish', 'Welington II.exe');
+    const caminhoDotNet = app.isPackaged 
+        ? path.join(process.resourcesPath, 'publish', 'Welington II.exe') 
+        : path.join(__dirname, 'assets', 'publish', 'Welington II.exe');
 
     if (fs.existsSync(caminhoDotNet)) {
       registrarLog('A iniciar motor .NET...');
@@ -265,7 +288,7 @@ function iniciarBotDeVerdade() {
       processoDotNet.stdout.on('data', (dados) => registrarLog(`[.NET]: ${dados.toString().trim()}`));
       processoDotNet.stderr.on('data', (erro) => registrarLog(`[ERRO .NET]: ${erro.toString().trim()}`));
     }
-
+    
     iniciarWhatsApp();
   });
 
@@ -281,37 +304,37 @@ function iniciarBotDeVerdade() {
     }).then((client) => {
       clientInstance = client;
       registrarLog('WhatsApp Conectado com sucesso!');
-
+      
       if (mainWindow) {
-        mainWindow.webContents.send('whatsapp-conectado');
-        mainWindow.webContents.send('atualizar-contatos', chatsLiberados);
+          mainWindow.webContents.send('whatsapp-conectado');
+          mainWindow.webContents.send('atualizar-contatos', chatsLiberados);
       }
 
       client.onMessage((message) => {
         if (message.isGroupMsg || typeof message.body !== 'string') return;
 
         const texto = message.body.toLowerCase().trim();
-        const numero = message.from;
+        const numero = message.from; 
 
         if (texto === 'liberar chat') {
-          if (!chatsLiberados.includes(numero)) {
-            chatsLiberados.push(numero);
-            salvarContatos();
-            registrarLog(`Novo administrador atrelado: ${numero}`);
-            if (mainWindow) mainWindow.webContents.send('atualizar-contatos', chatsLiberados);
-            client.sendText(numero, '✅ *Sistema Vinculado!*\nEste chat foi libertado e passará a receber as licitações aqui.');
-          } else {
-            client.sendText(numero, '⚠️ O seu chat já estava vinculado.');
-          }
-        }
+            if (!chatsLiberados.includes(numero)) {
+                chatsLiberados.push(numero);
+                salvarContatos(); 
+                registrarLog(`Novo administrador atrelado: ${numero}`);
+                if (mainWindow) mainWindow.webContents.send('atualizar-contatos', chatsLiberados);
+                client.sendText(numero, '✅ *Sistema Vinculado!*\nEste chat foi libertado e passará a receber as licitações aqui.');
+            } else {
+                client.sendText(numero, '⚠️ O seu chat já estava vinculado.');
+            }
+        } 
         else if (texto === 'sair') {
-          if (chatsLiberados.includes(numero)) {
-            chatsLiberados = chatsLiberados.filter(n => n !== numero);
-            salvarContatos();
-            registrarLog(`Administrador descadastrado: ${numero}`);
-            if (mainWindow) mainWindow.webContents.send('atualizar-contatos', chatsLiberados);
-            client.sendText(numero, '🛑 *Inscrição Cancelada!*\nVocê não receberá mais notificações de licitações. Se desejar voltar, digite *liberar chat*.');
-          }
+            if (chatsLiberados.includes(numero)) {
+                chatsLiberados = chatsLiberados.filter(n => n !== numero);
+                salvarContatos();
+                registrarLog(`Administrador descadastrado: ${numero}`);
+                if (mainWindow) mainWindow.webContents.send('atualizar-contatos', chatsLiberados);
+                client.sendText(numero, '🛑 *Inscrição Cancelada!*\nVocê não receberá mais notificações de licitações. Se desejar voltar, digite *liberar chat*.');
+            }
         }
       });
 
@@ -320,70 +343,63 @@ function iniciarBotDeVerdade() {
           const enqueteId = typeof res.msgId === 'object' ? res.msgId._serialized : res.msgId;
 
           if (votacoesAtivas[enqueteId]) {
-            const dadosDaVotacao = votacoesAtivas[enqueteId];
-            const pacoteDeDados = JSON.stringify(res.selectedOptions || res).toLowerCase();
+              const dadosDaVotacao = votacoesAtivas[enqueteId];
+              const pacoteDeDados = JSON.stringify(res.selectedOptions || res).toLowerCase();
+              
+              if (pacoteDeDados.includes('sim') || pacoteDeDados.includes('aceitar')) {
+                  dadosDaVotacao.votoAtual = true;
+              } else if (pacoteDeDados.includes('não') || pacoteDeDados.includes('recusar') || pacoteDeDados.includes('descartar')) {
+                  dadosDaVotacao.votoAtual = false;
+              } else { return; }
 
-            // Define o voto atual
-            if (pacoteDeDados.includes('sim') || pacoteDeDados.includes('aceitar')) {
-              dadosDaVotacao.votoAtual = true;
-            } else if (pacoteDeDados.includes('não') || pacoteDeDados.includes('recusar') || pacoteDeDados.includes('descartar')) {
-              dadosDaVotacao.votoAtual = false;
-            } else { return; }
+              if (!dadosDaVotacao.timerIniciado) {
+                  dadosDaVotacao.timerIniciado = true;
+                  salvarVotacoes();
+                  registrarLog(`⏳ Clique recebido do Edital [${dadosDaVotacao.id_edital}]. Reagindo com ⏳...`);
+                  
+                  await client.sendReactionToMessage(enqueteId, '⏳');
 
-            // SE FOR O PRIMEIRO CLIQUE: Inicia a contagem visual
-            if (!dadosDaVotacao.timerIniciado) {
-              dadosDaVotacao.timerIniciado = true;
-              salvarVotacoes();
+                  setTimeout(async () => {
+                      const votoFinal = votacoesAtivas[enqueteId].votoAtual;
+                      registrarLog(`🔒 Tempo esgotado para o Edital [${dadosDaVotacao.id_edital}]. Trocando reação para ✅.`);
+                      
+                      await client.sendReactionToMessage(enqueteId, '✅');
 
-              // REAÇÃO 1: Ampulheta indicando tempo em curso
-              await client.sendReactionToMessage(enqueteId, '⏳');
-              registrarLog(`⏳ Tempo iniciado para o Edital [${dadosDaVotacao.id_edital}].`);
+                      const resposta = { 
+                          telefone: dadosDaVotacao.numero, 
+                          id_edital: dadosDaVotacao.id_edital, 
+                          aprovado: votoFinal 
+                      };
 
-              setTimeout(async () => {
-                    const votoFinal = votacoesAtivas[enqueteId].votoAtual;
-                    registrarLog(`🔒 Tempo esgotado para o Edital [${dadosDaVotacao.id_edital}]. Trocando reação para ✅.`);
-                    
-                    await client.sendReactionToMessage(enqueteId, '✅');
+                      registrarLog(`\n======================================================`);
+                      registrarLog(`📤 A ENVIAR VOTO USANDO FETCH (localhost:8080)`);
+                      registrarLog(`PAYLOAD: ${JSON.stringify(resposta)}`);
+                      registrarLog(`======================================================\n`);
 
-                    // EXATAMENTE O FORMATO QUE O SEU C# ENTENDE
-                    const resposta = { 
-                        telefone: dadosDaVotacao.numero, 
-                        id_edital: dadosDaVotacao.id_edital, 
-                        aprovado: votoFinal 
-                    };
+                      fetch('http://localhost:8080/resposta-edital', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(resposta)
+                      }).then(async (resFetch) => {
+                          if (resFetch.ok) {
+                              registrarLog(`🟢 [SUCESSO REAL] O C# engoliu o pacote! Status: ${resFetch.status}`);
+                          } else {
+                              const textoErro = await resFetch.text();
+                              registrarLog(`⚠️ [AVISO] O C# atendeu, mas recusou (Status ${resFetch.status}): ${textoErro}`);
+                          }
+                      }).catch(err => {
+                          registrarLog(`❌ [ERRO] Falha ao conectar no C#: ${err.message}`);
+                      });
 
-                    registrarLog(`\n======================================================`);
-                    registrarLog(`📤 A ENVIAR VOTO USANDO FETCH (localhost:8080)`);
-                    registrarLog(`PAYLOAD: ${JSON.stringify(resposta)}`);
-                    registrarLog(`======================================================\n`);
+                      delete votacoesAtivas[enqueteId];
+                      salvarVotacoes();
 
-                    // 👇 O SEU CÓDIGO DE TESTE APLICADO NO BOT (Apontando para 8080)
-                    fetch('http://localhost:8080/resposta-edital', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(resposta)
-                    }).then(async (resFetch) => {
-                        if (resFetch.ok) {
-                            registrarLog(`🟢 [SUCESSO REAL] O C# engoliu o pacote! Status: ${resFetch.status}`);
-                        } else {
-                            // Se o C# der 400 de novo, isto vai ler o motivo exato que o C# reclamou!
-                            const textoErro = await resFetch.text();
-                            registrarLog(`⚠️ [AVISO] O C# atendeu, mas recusou (Status ${resFetch.status}): ${textoErro}`);
-                        }
-                    }).catch(err => {
-                        registrarLog(`❌ [ERRO] Falha ao conectar no C#: ${err.message}`);
-                    });
+                  }, 60000); 
 
-                    delete votacoesAtivas[enqueteId];
-                    salvarVotacoes();
-
-                }, 60000); // 1 minuto de espera // 1 minuto de espera
-
-            } else {
-              // Se o usuário clicar novamente, apenas salvamos o novo voto silenciosamente
-              salvarVotacoes();
-              registrarLog(`[ALTERAÇÃO] ${dadosDaVotacao.numero} trocou o voto dentro do tempo.`);
-            }
+              } else {
+                  salvarVotacoes();
+                  registrarLog(`[ALTERAÇÃO] ${dadosDaVotacao.numero} trocou o voto dentro do tempo.`);
+              }
           }
         } catch (erro) { registrarLog(`Erro na enquete: ${erro.message}`); }
       });
